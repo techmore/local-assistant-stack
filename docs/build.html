@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reference architectures and first-weekend plan | Local Assistant Stack</title>
+  <meta name="description" content="Three reference architectures for a local-first assistant on Mac minis and Linux clients, with component choices per layer, and a fourteen-step first-weekend build plan.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html" aria-current="page">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>What to build</h1>
+    <p class="lede">Three reference architectures with a choice per layer and a list of what will not work well, then a first-weekend plan. Architecture C, hybrid local plus hosted, is the recommendation.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#three-reference-architectures">Three reference architectures</a></li>
+      <li><a href="#first-weekend-build-plan">First-weekend build plan</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="three-reference-architectures">Three reference architectures</h2>
+<h3 id="a-single-m4-mini-16-to-32-gb-the-assistant-box">A. Single M4 mini, 16 to 32 GB: the assistant box</h3>
+<div class="table-wrap" role="region" aria-label="A. Single M4 mini, 16 to 32 GB: the assistant box table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Layer</th>
+<th scope="col">Choice</th>
+<th scope="col">Why</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Agent</th>
+<td>Hermes Agent, latest stable (v0.23.x), gateway as a LaunchAgent</td>
+<td>Closest single project; one gateway serves every client <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a></td>
+</tr>
+<tr>
+<th scope="row">Runtime</th>
+<td>llama.cpp <code>llama-server</code> (or Hermes's managed llama.cpp)</td>
+<td>Best tool-call completion and flat memory in the only controlled benchmark found <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a></td>
+</tr>
+<tr>
+<th scope="row">Chat and voice model</th>
+<td>16 GB: Gemma 4 E4B or Qwen 3.5 9B at 4-bit. 24 to 32 GB: Gemma 4 26B-A4B at 4-bit or LFM2.5-24B-A2B</td>
+<td>Speed first for voice; see <a href="models.html#recommendations-per-ram-tier">the RAM tier table</a></td>
+</tr>
+<tr>
+<th scope="row">Work model</th>
+<td>32 GB only: Qwen 3.6-35B-A3B at 4-bit with 32K context, swapped in for jobs</td>
+<td>First credible local agent tier</td>
+</tr>
+<tr>
+<th scope="row">STT</th>
+<td>Parakeet TDT v3 through FluidAudio or mlx-audio</td>
+<td>0.10 s on an M4 <a class="cite" href="sources.html#src-42" aria-label="Source 42">[42]</a></td>
+</tr>
+<tr>
+<th scope="row">TTS</th>
+<td>Kokoro through Kokoro-FastAPI or mlx-audio; Pocket TTS as the CPU-only alternative</td>
+<td>Local, fast, OpenAI-compatible so Hermes can use it <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a></td>
+</tr>
+<tr>
+<th scope="row">Wake word</th>
+<td>Hermes's openWakeWord "hey hermes"</td>
+<td>Built in, on-device <a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a></td>
+</tr>
+<tr>
+<th scope="row">Integrations</th>
+<td><code>imsg</code>, <code>remindctl</code>, Notes skill; IMAP with drafts-only for mail; CalDAV for calendar</td>
+<td>See <a href="permissions.html">permissions</a></td>
+</tr>
+<tr>
+<th scope="row">Long-horizon</th>
+<td>Hosted models through Claude Code or Codex CLI on a schedule, PR-only</td>
+<td>The local model at this size is not reliable for multi-hour work</td>
+</tr>
+<tr>
+<th scope="row">Cost</th>
+<td>Hardware; about 6 to 36 USD a year in electricity at the assumed rate; hosted tokens for the nightly jobs</td>
+<td></td>
+</tr>
+<tr>
+<th scope="row">Will not work well</th>
+<td>Unattended coding on the local model; anything needing more than about 32K context on 16 to 24 GB; two models resident at once below 32 GB</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="b-one-m4-pro-64-gb-mini-as-lan-inference-and-agent-hub-thin-clients-on-mac-and-linux">B. One M4 Pro 64 GB mini as LAN inference and agent hub, thin clients on Mac and Linux</h3>
+<div class="table-wrap" role="region" aria-label="B. One M4 Pro 64 GB mini as LAN inference and agent hub, thin clients on Mac and Linux table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Layer</th>
+<th scope="col">Choice</th>
+<th scope="col">Why</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Runtime</th>
+<td>oMLX as the primary server on the LAN, with llama.cpp kept available as the fallback for any model whose tool calls fail on MLX</td>
+<td>Pinning, auto-swap, SSD KV cache and batching suit a shared server; both passed all SiliconBench gates <a class="cite" href="sources.html#src-36" aria-label="Source 36">[36]</a><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a></td>
+</tr>
+<tr>
+<th scope="row">Pinned model</th>
+<td>Gemma 4 E4B or a 9B for voice and quick chat</td>
+<td>Sub-second first token</td>
+</tr>
+<tr>
+<th scope="row">Work model</th>
+<td>Start with Qwen 3.6-35B-A3B at 8-bit; evaluate Qwen 3.8-27B at 6-bit and Qwen3-Coder-Next at Q4 against it</td>
+<td>Fast MoE first; the 27B is slower, and whether it is better is for the evaluation to decide; Coder-Next needs nearly all 64 GB</td>
+</tr>
+<tr>
+<th scope="row">Agent</th>
+<td>Hermes Agent gateway on the Pro mini, because Apple data lives there; webapp and desktop clients from other machines</td>
+<td>v0.23.0 architecture <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a></td>
+</tr>
+<tr>
+<th scope="row">Other minis</th>
+<td>Each runs its own small server for a dedicated role (voice satellite with local STT and TTS, a second agent worker). No cluster.</td>
+<td>Clustering gave about 1.3x on decode and needs Thunderbolt 5 with RDMA <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a></td>
+</tr>
+<tr>
+<th scope="row">Linux clients</th>
+<td>Hermes desktop, TUI or browser pointed at the gateway; any OpenAI-compatible tool pointed at the mini's endpoint; local sandboxed shell tools on the Linux box</td>
+<td>Linux on M4 has no GPU inference <a class="cite" href="sources.html#src-40" aria-label="Source 40">[40]</a><a class="cite" href="sources.html#src-41" aria-label="Source 41">[41]</a></td>
+</tr>
+<tr>
+<th scope="row">Messages</th>
+<td><code>imsg</code> or BlueBubbles on the Pro mini; blueferry on a roaming Linux laptop</td>
+<td>See <a href="permissions.html#imessage-specifically">iMessage options</a></td>
+</tr>
+<tr>
+<th scope="row">Long-horizon</th>
+<td>Local model for triage, summarising, labelling, first drafts; hosted for multi-file code changes</td>
+<td>See <a href="models.html#where-local-still-falls-short-and-the-hybrid-pattern">where local falls short</a></td>
+</tr>
+<tr>
+<th scope="row">Cost</th>
+<td>Requires an M4 Pro with 64 GB. If you do not have one, this is a purchase, and current-generation pricing was not checked. Electricity about 7 to 74 USD a year.</td>
+<td></td>
+</tr>
+<tr>
+<th scope="row">Will not work well</th>
+<td>Several concurrent heavy agents on one 64 GB machine; 256K contexts at interactive speed; expecting parity with hosted frontier models</td>
+<td></td>
+</tr>
+</tbody></table></div>
+<h3 id="c-hybrid-local-plus-hosted-recommended">C. Hybrid local plus hosted (recommended)</h3>
+<p>This is A or B with an explicit routing rule, and it is what the evidence supports regardless of which minis you have.</p>
+<div class="table-wrap" role="region" aria-label="C. Hybrid local plus hosted (recommended) table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Class of work</th>
+<th scope="col">Route</th>
+<th scope="col">Reason</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Voice turns, quick questions</th>
+<td>Small local model, pinned</td>
+<td>Latency and privacy</td>
+</tr>
+<tr>
+<th scope="row">Anything that reads messages, mail, calendar, notes</th>
+<td>Local model only</td>
+<td>Private data stays in the house</td>
+</tr>
+<tr>
+<th scope="row">Drafting replies</th>
+<td>Local model writes to a review queue; nothing sends without approval</td>
+<td>See <a href="permissions.html#draft-but-do-not-send">draft but do not send</a></td>
+</tr>
+<tr>
+<th scope="row">Upstream triage, labelling, digests</th>
+<td>Local model plus deterministic rules, report-only</td>
+<td>The model labels, code decides; checkable</td>
+</tr>
+<tr>
+<th scope="row">Nightly repo clean-ups, multi-file changes, investigations</th>
+<td>Hosted frontier model through Claude Code or Codex CLI in a sandbox, PR-only, with a spend cap</td>
+<td>Local models that fit in 64 GB are well behind on long-horizon work</td>
+</tr>
+<tr>
+<th scope="row">Fallback when hosted is down or over budget</th>
+<td>Local work model, report-only</td>
+<td>Degrade safely</td>
+</tr>
+</tbody></table></div>
+<p>Hermes Agent expresses this with a main model, <code>fallback_providers</code>, <code>cron.model</code> and per-job pins <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a>. Components per layer are as in A or B.</p>
+<p>Why C: it does not depend on how much RAM the minis have, and it puts the unreliable component, the local model, only where its output is cheap to check.</p>
+<h2 id="first-weekend-build-plan">First-weekend build plan</h2>
+<h3 id="saturday-morning-foundations-one-mini">Saturday morning: foundations (one mini)</h3>
+<ol>
+<li>Record chip and RAM of each mini with <code>system_profiler SPHardwareDataType</code>. This decides between A and B.</li>
+<li>Check free disk space before downloading anything. The larger models in <a href="models.html#recommendations-per-ram-tier">the RAM tier table</a> are 16 to 52 GB of weights each.</li>
+<li>Install the current stable Hermes Agent release and confirm <code>hermes doctor</code> passes.</li>
+<li>Download two models only: one small chat model and one work model sized for the tier (<a href="models.html#recommendations-per-ram-tier">RAM tier table</a>). Use vendor or Unsloth builds at 4-bit or better.</li>
+<li>Start <code>llama-server</code> with explicit context, prompt caching on and an API key, under launchd, with a health check that alerts on failure.</li>
+</ol>
+<h3 id="saturday-afternoon-pick-the-model-with-evidence">Saturday afternoon: pick the model with evidence</h3>
+<ol start="6">
+<li>Build a small evaluation set for your own task, with adjudicated gold labels and a rules baseline, and score each candidate on your production runtime at the quantization you will use. Record tokens per second, time to first token and memory alongside accuracy. This produces real, reproducible numbers for your own hardware and task.</li>
+<li>Point Hermes at the local endpoint and run a short scripted tool-calling check (ten tasks that require real tool use, including "do not call a tool"). Reject any model and quantization that fakes a result.</li>
+</ol>
+<h3 id="sunday-morning-voice-and-integrations">Sunday morning: voice and integrations</h3>
+<ol start="8">
+<li>Voice: enable Hermes voice mode with local STT; run Kokoro-FastAPI or mlx-audio as the TTS endpoint and set Hermes's TTS provider to it instead of the Edge default; enable the wake word. Measure time from end of speech to first audio with a stopwatch script and write it down.</li>
+<li>Integrations, read-only first: <code>remindctl</code>, Notes skill, CalDAV calendar, IMAP inbox. For mail, give the agent IMAP without SMTP so it can only leave drafts.</li>
+<li>Messages: install <code>imsg</code>, grant access to the smallest host process possible, enable read and watch only. Build the review queue as a plain folder of Markdown drafts with an <code>approve</code> script that is the only caller of <code>imsg send</code>.</li>
+</ol>
+<h3 id="sunday-afternoon-unattended-work">Sunday afternoon: unattended work</h3>
+<ol start="11">
+<li>Create a fine-grained read-only GitHub token and a bot-fork write token. Add the <code>pre-push</code> hook and branch rules.</li>
+<li>Schedule two jobs: a daily read-only upstream triage job (local model, report-only) and one nightly repo clean-up (hosted model in <code>srt</code> or a container, draft PR only, spend cap, wall-clock timeout).</li>
+<li>Add the morning digest and the dead-man check.</li>
+<li>Write down what failed, and compare the list with <a href="gaps.html">the gaps on the roadmap</a>.</li>
+</ol>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="unattended.html"><span>Previous</span>Unattended</a>
+    <a href="gaps.html"><span>Next</span>Roadmap</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

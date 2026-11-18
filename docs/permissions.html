@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Integrations and permissions | Local Assistant Stack</title>
+  <meta name="description" content="What each kind of macOS app access requires, Apple&#x27;s Full Disk Access changes, safer deployment shapes, draft-but-do-not-send patterns, iMessage options, and the Linux side.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html" aria-current="page">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>Integrations and permissions</h1>
+    <p class="lede">What it takes to let an agent reach Messages, Mail, Calendar, Reminders and Notes, why the current grants are too broad, and how to keep sending under human control.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#macos-what-each-kind-of-access-actually-requires">macOS: what each kind of access actually requires</a></li>
+      <li><a href="#a-safer-shape-for-macos">A safer shape for macOS</a></li>
+      <li><a href="#draft-but-do-not-send">Draft but do not send</a></li>
+      <li><a href="#imessage-specifically">iMessage specifically</a></li>
+      <li><a href="#linux">Linux</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="macos-what-each-kind-of-access-actually-requires">macOS: what each kind of access actually requires</h2>
+<div class="table-wrap" role="region" aria-label="macOS: what each kind of access actually requires table" tabindex="0">
+<table class="c5">
+<thead><tr>
+<th scope="col">Data or action</th>
+<th scope="col">Mechanism</th>
+<th scope="col">Permission (TCC)</th>
+<th scope="col">Scope you get</th>
+<th scope="col">Tools</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Calendar, Reminders</th>
+<td>EventKit</td>
+<td>Per-app Calendar and Reminders grants, with a write-only option for Calendar</td>
+<td>Good: per data type, per binary</td>
+<td><code>remindctl</code>; EventKit-based MCP servers <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a><a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a></td>
+</tr>
+<tr>
+<th scope="row">Contacts</th>
+<td>Contacts framework</td>
+<td>Per-app Contacts grant</td>
+<td>Good</td>
+<td>MCP servers <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a></td>
+</tr>
+<tr>
+<th scope="row">Notes</th>
+<td>AppleScript or JXA to Notes.app</td>
+<td>Automation grant from the host app to Notes</td>
+<td>All notes, read and write</td>
+<td>Hermes <code>apple-notes</code> skill; MCP servers <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a></td>
+</tr>
+<tr>
+<th scope="row">Mail (Mail.app)</th>
+<td>AppleScript or JXA; some tools read Mail's SQLite store directly</td>
+<td>Automation to Mail; direct database reads need Full Disk Access</td>
+<td>All mailboxes</td>
+<td>MCP servers <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a></td>
+</tr>
+<tr>
+<th scope="row">Mail (protocol)</th>
+<td>IMAP and SMTP, or a provider API</td>
+<td>None on the Mac. Scope comes from the credential.</td>
+<td>As narrow as the provider allows (app password, OAuth scopes)</td>
+<td>Hermes email gateway; Himalaya <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a></td>
+</tr>
+<tr>
+<th scope="row">Messages, read</th>
+<td>Read <code>~/Library/Messages/chat.db</code></td>
+<td><strong>Full Disk Access</strong> for the host process</td>
+<td>Everything Full Disk Access covers, far beyond Messages</td>
+<td><code>imsg</code> <a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a></td>
+</tr>
+<tr>
+<th scope="row">Messages, send</th>
+<td>AppleScript to Messages.app</td>
+<td>Automation to Messages</td>
+<td>Can send to anyone</td>
+<td><code>imsg send</code>; BlueBubbles server <a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a><a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a></td>
+</tr>
+<tr>
+<th scope="row">Files</th>
+<td>Direct</td>
+<td>Folder grants (Desktop, Documents, Downloads, removable volumes) or Full Disk Access</td>
+<td>Per folder</td>
+<td>n/a</td>
+</tr>
+<tr>
+<th scope="row">Screen and UI control</th>
+<td>Accessibility, Screen Recording</td>
+<td>Per-app grants</td>
+<td>Whole desktop</td>
+<td>cua, Peekaboo <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a></td>
+</tr>
+<tr>
+<th scope="row">App actions through Siri</th>
+<td>App Intents</td>
+<td>System consent per app</td>
+<td>Per intent; the cleanest model</td>
+<td>Only for apps that ship intents; not a general agent API <a class="cite" href="sources.html#src-20" aria-label="Source 20">[20]</a></td>
+</tr>
+<tr>
+<th scope="row">Shortcuts</th>
+<td><code>shortcuts run</code> CLI</td>
+<td>Inherits each shortcut's own grants</td>
+<td>Per shortcut; a good hand-built allowlist</td>
+<td>Apple-MCPs lists Shortcuts support <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a></td>
+</tr>
+</tbody></table></div>
+<p>Two things to know:</p>
+<ol>
+<li><strong>TCC grants attach to the "responsible" app</strong>, which for a CLI tool is usually the terminal or the launchd-run binary. Granting Full Disk Access to a terminal gives it to everything run in that terminal. This is from prior knowledge of macOS and is consistent with the <code>imsg</code> and Hermes skill instructions, which tell you to grant Full Disk Access to the terminal <a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a><a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>.</li>
+<li><strong>Apple is tightening exactly this.</strong> On 2026-10-02 Apple said it would add "additional controls" to Full Disk Access because of AI agents, noting that such access could expose "files, mail, messages, and even browsing history" <a class="cite" href="sources.html#src-9" aria-label="Source 9">[9]</a>. The macOS 27.3 beta, reported 2026-11-16, splits the setting into "System &amp; App Protection Override" and "Accessibility", encourages grants limited to specific apps or folders, adds an ask-each-time option, and shows a menu bar indicator when one app controls another. Existing grants stay in effect; developers must "gracefully handle" limited access; entitlement details are "coming soon" <a class="cite" href="sources.html#src-10" aria-label="Source 10">[10]</a>. Any design that depends on blanket Full Disk Access is building on ground that is moving. Plan for per-folder grants and for helper binaries with a single narrow grant each.</li>
+</ol>
+<h2 id="a-safer-shape-for-macos">A safer shape for macOS</h2>
+<ul>
+<li><strong>Separate macOS user account for the agent.</strong> It gets its own home directory, keychain and TCC database. Sign that account into only what the agent needs. The catch: Messages and iCloud data belong to the Apple ID signed in to that account, so reading your messages needs either your Apple ID on the agent account or a small broker in your own account. I found one tool (SandVault) that combines a separate account with sandbox-exec; I did not evaluate it <a class="cite" href="sources.html#src-49" aria-label="Source 49">[49]</a>.</li>
+<li><strong>Broker processes with one grant each.</strong> A tiny signed helper that holds the Messages grant and exposes only "list recent threads", "read thread", "queue draft", over a local socket. The agent never holds Full Disk Access. No existing project packages this; it is <a href="gaps.html#gap-1">gap 1 on the roadmap</a>.</li>
+<li><strong>Sandbox the agent's shell.</strong> Anthropic's <code>sandbox-runtime</code> (<code>srt</code>, Apache-2.0, 7,170 stars) wraps any process using <code>sandbox-exec</code> on macOS and bubblewrap on Linux, with a network allowlist proxy, without a container <a class="cite" href="sources.html#src-50" aria-label="Source 50">[50]</a>. Codex CLI, Claude Code and Gemini CLI all use Seatbelt on macOS <a class="cite" href="sources.html#src-49" aria-label="Source 49">[49]</a>. Limits reported in 2026 write-ups: <code>sandbox-exec</code> is marked deprecated though it still works on macOS 27.0.1; profiles that block writes can still leave secrets readable unless reads are denied explicitly; nested sandboxes break browsers launched inside <a class="cite" href="sources.html#src-49" aria-label="Source 49">[49]</a> (secondary).</li>
+<li><strong>Containers and VMs.</strong> Apple's <code>container</code> tool runs Linux containers in lightweight VMs on a Mac (Apache-2.0, 51,911 stars) <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>. Hermes Agent and OpenClaw both support Docker backends for tool execution; NanoClaw runs every agent in its own container by default <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a><a class="cite" href="sources.html#src-51" aria-label="Source 51">[51]</a>. A container cannot reach Apple app data at all, which is the point: run code tasks inside, keep personal-data tools outside behind the broker.</li>
+<li><strong>Agent-level approvals.</strong> Hermes: <code>approvals.mode: manual</code> or <code>smart</code>, and keep <code>cron_mode: deny</code> so unattended jobs fail closed <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>. OpenClaw: tool allow and deny policies and exec approvals in the Mac app <a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a>.</li>
+</ul>
+<h2 id="draft-but-do-not-send">Draft but do not send</h2>
+<div class="table-wrap" role="region" aria-label="Draft but do not send table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Channel</th>
+<th scope="col">Pattern</th>
+<th scope="col">Notes</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Email over IMAP</th>
+<td>Append the draft to the Drafts mailbox with IMAP APPEND. Give the agent IMAP only and no SMTP credential.</td>
+<td>The mail client shows the draft on every device. The agent physically cannot send. Standard IMAP behaviour, from prior knowledge.</td>
+</tr>
+<tr>
+<th scope="row">Gmail</th>
+<td>A credential limited to composing drafts.</td>
+<td>Scope names not re-verified today.</td>
+</tr>
+<tr>
+<th scope="row">Mail.app</th>
+<td>AppleScript: create an outgoing message with <code>visible:true</code> and never call <code>send</code>.</td>
+<td>Weaker: the same Automation grant also permits <code>send</code>. Enforce in the broker, not in the prompt.</td>
+</tr>
+<tr>
+<th scope="row">Messages</th>
+<td>There is no drafts API. Use a review queue: the agent writes proposed replies to a queue; you approve; only the approval path calls <code>imsg send</code>. An alternative is opening an <code>sms:</code> or <code>imessage:</code> URL to prefill the compose field for you to press return; I did not test this today.</td>
+<td>Apple2Agent implements native approval before outgoing mail <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a>. Hermes's iMessage skill says to always confirm bulk sends but that is an instruction to the model, not an enforcement <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>.</td>
+</tr>
+<tr>
+<th scope="row">Any channel</th>
+<td>Split read tools and write tools into separate MCP servers or skills and enable only the read set for unattended jobs.</td>
+<td>Hermes toolsets and OpenClaw tool policies both allow this <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a>.</td>
+</tr>
+</tbody></table></div>
+<h2 id="imessage-specifically">iMessage specifically</h2>
+<div class="table-wrap" role="region" aria-label="iMessage specifically table" tabindex="0">
+<table class="c4">
+<thead><tr>
+<th scope="col">Option</th>
+<th scope="col">How</th>
+<th scope="col">Offline</th>
+<th scope="col">Limits</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row"><code>imsg</code></th>
+<td>Swift CLI on the Mac. Reads <code>chat.db</code>, watches for new messages as NDJSON or JSON-RPC, sends through Messages.app automation. v0.21.1, 2026-11-16. A Linux build can read a copied <code>chat.db</code> but cannot send.</td>
+<td>Yes</td>
+<td>Needs Full Disk Access on the Mac. No group management <a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a>.</td>
+</tr>
+<tr>
+<th scope="row">BlueBubbles server</th>
+<td>Open-source macOS server (Apache-2.0, 1,146 stars) bridging iMessage to other devices over a REST API and webhooks. Hermes has an adapter.</td>
+<td>Yes on a LAN</td>
+<td>Needs an always-on Mac signed into Messages <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</td>
+</tr>
+<tr>
+<th scope="row">Photon</th>
+<td>Managed iMessage line service with a Hermes plugin.</td>
+<td>No</td>
+<td>Third-party service; messages leave the house <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>.</td>
+</tr>
+<tr>
+<th scope="row">blueferry</th>
+<td>iPhone to Linux over Bluetooth, no Mac. v0.9.1, 2026-10-31, 343 stars. Clients for GTK, KDE, Quickshell and terminal.</td>
+<td>Yes</td>
+<td>Experimental. Sees only messages while connected. No attachments, reactions or full sent history. Apple could change the Bluetooth behaviour <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</td>
+</tr>
+<tr>
+<th scope="row">OpenClaw iMessage channel</th>
+<td>Built in, uses <code>imsg</code>.</td>
+<td>Yes</td>
+<td>Same permissions as <code>imsg</code> <a class="cite" href="sources.html#src-6" aria-label="Source 6">[6]</a>.</td>
+</tr>
+</tbody></table></div>
+<p>In practice: the always-on mini runs <code>imsg</code> or BlueBubbles and is the message hub; Linux clients talk to the agent gateway on the mini. blueferry is the fallback for a Linux box used away from the minis, and wiring it to an agent is unbuilt.</p>
+<h2 id="linux">Linux</h2>
+<ul>
+<li>Sandboxing is stronger than on macOS: bubblewrap (what <code>srt</code> uses), Landlock, systemd unit hardening (<code>ProtectHome</code>, <code>ReadWritePaths</code>, <code>PrivateNetwork</code>, <code>NoNewPrivileges</code>), dedicated service users, rootless Podman. These are standard and scriptable.</li>
+<li>Personal data is weaker: there is no common, permissioned API for calendar, contacts, mail and notes across desktops. The MCP bridges found expose D-Bus or the accessibility tree broadly <a class="cite" href="sources.html#src-11" aria-label="Source 11">[11]</a>. On Omarchy (Hyprland) there is no desktop-wide portal permission system for these data types that I could find.</li>
+<li>The pragmatic approach on Linux is protocol-level access with narrow credentials: CalDAV and CardDAV for calendar and contacts, IMAP for mail, plain Markdown files for notes, <code>gh</code> with a fine-grained token for GitHub. That also works on macOS, which makes it the portable layer. iCloud calendars and contacts are reachable over CalDAV and CardDAV with an app-specific password (from prior knowledge; not re-verified today).</li>
+<li>KDE Connect (4,169 stars) covers Android notifications and SMS; it does not help with iMessage <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</li>
+</ul>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="voice.html"><span>Previous</span>Voice</a>
+    <a href="unattended.html"><span>Next</span>Unattended</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

@@ -1,0 +1,453 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Models on M4 Mac minis | Local Assistant Stack</title>
+  <meta name="description" content="Which local models fit an M4 or M4 Pro Mac mini, how fast they run, how reliably they call tools, and where they fall short. Every speed is labelled measured, community or estimate.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html" aria-current="page">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>The model layer on M4 Mac minis</h1>
+    <p class="lede">Hardware facts, speeds with stated hardware, what leads for agent work, tool-calling reliability, a recommendation per RAM tier, and where local models still fall short.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#hardware-facts">Hardware facts</a></li>
+      <li><a href="#speed-numbers-with-stated-hardware">Speed numbers with stated hardware</a></li>
+      <li><a href="#what-currently-leads-for-local-agent-work">What currently leads for local agent work</a></li>
+      <li><a href="#tool-calling-reliability">Tool-calling reliability</a></li>
+      <li><a href="#recommendations-per-ram-tier">Recommendations per RAM tier</a></li>
+      <li><a href="#where-local-still-falls-short-and-the-hybrid-pattern">Where local still falls short, and the hybrid pattern</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="hardware-facts">Hardware facts</h2>
+<ul>
+<li>Apple's published power figures: Mac mini (2024) M4 draws 4 W idle and 65 W maximum; M4 Pro draws 5 W idle and 140 W maximum <a class="cite" href="sources.html#src-26" aria-label="Source 26">[26]</a>.</li>
+<li>Memory bandwidth decides token speed for models that fit. One source cites 273 GB/s for the M4 Pro mini <a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a>. The base M4 figure of about 120 GB/s is from my prior knowledge of Apple's specifications and was not re-verified today. Expect a base M4 to generate at a bit under half the speed of an M4 Pro on the same model.</li>
+<li>RAM configurations, from prior knowledge and not re-verified today: base M4 comes in 16, 24 or 32 GB; M4 Pro comes in 24, 48 or 64 GB. So "64 GB" implies an M4 Pro and "32 GB" implies a base M4.</li>
+<li>Sources now benchmark against a Mac mini M6 <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>. The M4 minis are previous-generation hardware. This does not change what they can run.</li>
+</ul>
+<h2 id="speed-numbers-with-stated-hardware">Speed numbers with stated hardware</h2>
+<div class="table-wrap" role="region" aria-label="Speed numbers with stated hardware table" tabindex="0">
+<table class="c7">
+<thead><tr>
+<th scope="col">Hardware</th>
+<th scope="col">Model</th>
+<th scope="col">Quant</th>
+<th scope="col">Runtime</th>
+<th scope="col">Tokens/s</th>
+<th scope="col">Kind</th>
+<th scope="col">Source, date</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">M4 mini 24 GB, under normal desktop load</th>
+<td>Qwen 3 14B dense</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>11.5</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a>, 2026-03</td>
+</tr>
+<tr>
+<th scope="row">M4 mini 24 GB, same</th>
+<td>Qwen 3 30B-A3B MoE</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>44.8, with 2.74 GB swap and memory pressure</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 mini 24 GB, same</th>
+<td>Qwen 3.5 35B-A3B MoE</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>Metal out-of-memory crash at 20.4 GB</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 mini 24 GB, same</th>
+<td>Llama 3.2 3B</td>
+<td>Q4_K_M</td>
+<td>Ollama</td>
+<td>42.0</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 mini 24 GB, same</th>
+<td>DeepSeek-R1 32B dense</td>
+<td>Q4_K_M</td>
+<td>Ollama</td>
+<td>0.28 (swapping)</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 mini 16 GB</th>
+<td>Mellum2.1-12B-A2.5B-Thinking</td>
+<td>Q4_K_M</td>
+<td>llama.cpp</td>
+<td>about 50</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>, 2026-11-14</td>
+</tr>
+<tr>
+<th scope="row">M4, 24 GB</th>
+<td>LFM2.5-24B-A2B</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>59.9</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a>, 2026-11-14</td>
+</tr>
+<tr>
+<th scope="row">M4, 16 GB</th>
+<td>LFM3-1.7B</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>92.5</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4, 16 GB</th>
+<td>Qwen 3.5 9B</td>
+<td>Q4_K_M</td>
+<td>LM Studio</td>
+<td>18</td>
+<td><span class="badge b-estimate">estimate</span> from a bandwidth model</td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4, 16 GB</th>
+<td>gpt-oss 20B</td>
+<td>MXFP4</td>
+<td>MLX</td>
+<td>34</td>
+<td><span class="badge b-estimate">estimate</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4, 16 GB</th>
+<td>Gemma 4 12B</td>
+<td>Q4_K_M</td>
+<td>MLX</td>
+<td>13</td>
+<td><span class="badge b-estimate">estimate</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro mini 64 GB</th>
+<td>Qwen3.5-35B-A3B</td>
+<td>8-bit</td>
+<td>llama.cpp</td>
+<td>40.0 at 512 context, 35.7 at 16K</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>, 2026-09-12</td>
+</tr>
+<tr>
+<th scope="row">M4 Pro mini 64 GB</th>
+<td>Qwen3.5-35B-A3B</td>
+<td>8-bit</td>
+<td>mlx_lm</td>
+<td>49.3 at 512, 43.7 at 16K</td>
+<td><span class="badge b-measured">measured</span></td>
+<td><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro mini 64 GB</th>
+<td>Qwen3.5-35B-A3B</td>
+<td>8-bit</td>
+<td>EXO</td>
+<td>66.8 at 512, 57.0 at 16K</td>
+<td><span class="badge b-measured">measured</span> (EXO Labs co-authored the paper)</td>
+<td><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 48 GB</th>
+<td>Qwen 3.5 9B</td>
+<td>4-bit</td>
+<td>MLX</td>
+<td>50.2</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 48 GB</th>
+<td>Qwen 3.5 9B</td>
+<td>Q4_K_M</td>
+<td>llama.cpp</td>
+<td>39.1</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 48 GB</th>
+<td>Recursive Flint (40B, about 2.5B active)</td>
+<td>Q4_1</td>
+<td>llama.cpp</td>
+<td>79.6</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 48 GB</th>
+<td>Qwen 3.8-27B dense</td>
+<td>Q4_K_M</td>
+<td>Ollama</td>
+<td>13</td>
+<td><span class="badge b-estimate">estimate</span></td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 64 GB</th>
+<td>Qwen3-Coder-Next (80B, 3B active)</td>
+<td>Q4_K_M</td>
+<td>Ollama</td>
+<td>about 44</td>
+<td><span class="badge b-estimate">estimate</span>; the source says no measured Mac run exists</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 24 GB</th>
+<td>Qwen 3.6-35B-A3B</td>
+<td>Q4_K_M</td>
+<td>Ollama</td>
+<td>74</td>
+<td><span class="badge b-estimate">estimate</span>; and it does not fit comfortably in 24 GB</td>
+<td><a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a></td>
+</tr>
+<tr>
+<th scope="row">M6 mini 32 GB</th>
+<td>Qwen 3.6-35B-A3B</td>
+<td>4-bit</td>
+<td>MLX and oMLX</td>
+<td>59</td>
+<td><span class="badge b-community">community runs</span></td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">M6 mini 24 GB</th>
+<td>Qwen 3.8-27B dense</td>
+<td>4-bit</td>
+<td>not stated</td>
+<td>about 10, "too slow for an agent loop"</td>
+<td><span class="badge b-community">community run</span></td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+</tbody></table></div>
+<p>Prefill matters as much as decode for agents. On the M4 Pro 64 GB mini with the 8-bit 35B-A3B model, processing a 16K-token prompt took 25.0 s on llama.cpp, 22.8 s on mlx_lm and 18.8 s on EXO <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>. An agent turn with a large tool list and history pays that cost every time the cached prefix is invalidated. Prompt caching is not optional.</p>
+<p>The index in <a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a> labels its figures as 73 published, 246 community and 300 estimated, and reports a 14% median gap between its estimates and measurements. Treat its estimate rows accordingly. The measured M4 24 GB study found that "theoretical estimates were 1.5-2x too optimistic" under real desktop load <a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a>.</p>
+<h2 id="what-currently-leads-for-local-agent-work">What currently leads for local agent work</h2>
+<p>Model families that exist on Hugging Face today (verified by listing, 2026-11-18) <a class="cite" href="sources.html#src-15" aria-label="Source 15">[15]</a>: Qwen 3.5 (February 2026), Qwen 3.6-35B-A3B (April 2026), Qwen 3.8-27B (August 2026), Gemma 4 (E2B, E4B, 12B, 26B-A4B, 31B; March to May 2026), NVIDIA Nemotron 3.5 Lightning 30B-A3B (August 2026) and Bolt E4B (October 2026), GLM-5.3 and GLM-5.3-Flash (August 2026), DeepSeek V4.1 Flash (September to October 2026), Recursive Flint (October 2026), JetBrains Mellum2.1-12B-A2.5B (September 2026), Cohere North Mini Code 1.0 (June 2026), Kwaipilot KAT-Coder-V2.5 (July 2026), Ornith 1.5 9B and 35B-A3B (August 2026), LiquidAI LFM3 (October 2026), Qwen3-Coder-Next (January 2026), gpt-oss 20b and 120b (August 2025), Devstral Small 2 24B and Devstral 2 123B (December 2025), Mistral Small 4 119B (January 2026), Hermes 4 (August 2025) and Hermes 4.3 36B (November 2025). I found no Phi-5 and no Llama 5; the newest Phi and Llama entries in these searches are old.</p>
+<p>Published coding-agent scores, all vendor or secondary, with different scaffolds, so not directly comparable <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a><a class="cite" href="sources.html#src-16" aria-label="Source 16">[16]</a><a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a>:</p>
+<div class="table-wrap" role="region" aria-label="What currently leads for local agent work table" tabindex="0">
+<table class="c5">
+<thead><tr>
+<th scope="col">Model</th>
+<th scope="col">Size</th>
+<th scope="col">Score</th>
+<th scope="col">Scaffold</th>
+<th scope="col">Source</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Recursive Flint</th>
+<td>40B, about 2.5B active</td>
+<td>74.2 SWE-bench Verified</td>
+<td>mini-swe-agent, vendor run</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">Qwen 3.6-35B-A3B</th>
+<td>35B, 3B active</td>
+<td>73.4 SWE-bench Verified</td>
+<td>Qwen's own scaffold; 64.4 in a third-party Claude Code run</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">Qwen3-Coder-Next</th>
+<td>80B, 3B active</td>
+<td>70.6 SWE-bench Verified</td>
+<td>SWE-Agent</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">KAT-Coder-V2.5</th>
+<td>35B, 3B active</td>
+<td>69.4 SWE-bench Verified</td>
+<td>Claude Code 2.1.195, vendor run</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">North Mini Code 1.0</th>
+<td>30.5B, 3B active</td>
+<td>67.6 SWE-bench Verified</td>
+<td>SWE-agent, vendor</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">MiMo-V2.6-Distill-Qwen-9B</th>
+<td>9.4B dense</td>
+<td>61.1 SWE-bench Verified</td>
+<td>scaffold not named</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">Mellum2.1-12B-A2.5B</th>
+<td>12B, 2.5B active</td>
+<td>47.0 SWE-bench Verified</td>
+<td>Pi harness, vendor</td>
+<td><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a></td>
+</tr>
+<tr>
+<th scope="row">Qwen 3.8-27B</th>
+<td>27B dense</td>
+<td>67% Terminal-Bench 2.1; 65.77% Hermes Bench</td>
+<td>Nous Research's runs</td>
+<td><a class="cite" href="sources.html#src-16" aria-label="Source 16">[16]</a></td>
+</tr>
+<tr>
+<th scope="row">Arete-27B (Nous)</th>
+<td>27B dense</td>
+<td>70% Terminal-Bench 2.1; 65.60% Hermes Bench</td>
+<td>Nous Research's runs</td>
+<td><a class="cite" href="sources.html#src-16" aria-label="Source 16">[16]</a></td>
+</tr>
+<tr>
+<th scope="row">GLM-5.3</th>
+<td>753B, about 40B active</td>
+<td>88.2 Terminal-Bench 2.1</td>
+<td>cited without a primary link</td>
+<td><a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a></td>
+</tr>
+</tbody></table></div>
+<p>GLM-5.3 at 4-bit is about 425 GB <a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a>. It is not a Mac mini model. The gap between it and Qwen 3.8-27B on the same benchmark (88.2 against 67) is a rough measure of what fitting in a mini costs. I did not find hosted frontier scores on Terminal-Bench 2.1 from a primary source today.</p>
+<h2 id="tool-calling-reliability">Tool-calling reliability</h2>
+<p>There is no single authoritative tool-calling leaderboard for these models that I could find. What the evidence shows:</p>
+<ul>
+<li><strong>The runtime changes the result.</strong> In SiliconBench's agent split on Gemma 4 E4B, llama.cpp completed 100 of 100 requests, oMLX 94, vllm-metal 93 and mlx_lm 56, with the paper attributing part of the failures to tool-call serialization <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>. On Qwen3-0.6B, Ollama failed the paper's five-shot fidelity check and streamed about 254 tokens with an empty tool-call field on tool prompts; the paper traces this to a chat-template import bug in April <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>. A model that calls tools correctly on one server can fail on another.</li>
+<li><strong>The quantization source changes the result.</strong> One hands-on OpenCode comparison found Unsloth's IQ3_XXS build of Qwen 3.5 27B made 5.0% errors on a migration task while another publisher's IQ3_XXS of the same model made 100% <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a> (secondary; hardware was a 16 GB VRAM PC, not a Mac; no date on the page).</li>
+<li><strong>Small models skip tools.</strong> In the same test, <code>qwen3.5:9b</code> at the default Ollama quantization "never called a tool" and claimed a build without touching files. gpt-oss 20b failed at default reasoning and passed with high reasoning. Devstral Small 2 24B wrote shell commands into <code>go.mod</code>. Qwen3-Coder-Next, Gemma 4 26B-A4B and the good Qwen 3.5 27B build passed with single-digit error rates <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a>.</li>
+<li><strong>KV cache quantization hurts.</strong> One guide reports that aggressive KV cache quantization degrades tool-calling accuracy <a class="cite" href="sources.html#src-32" aria-label="Source 32">[32]</a> (secondary).</li>
+<li><strong>Published numbers</strong>: Qwen 3.6-35B-A3B reports 62.8 on MCP-Atlas and 67.2 on TAU3-Bench (vendor); an arXiv agent benchmark scored Gemma 4 26B at 0.82 overall and Gemma 4 31B at 0.86, with gpt-oss-120b lowest at 0.71 <a class="cite" href="sources.html#src-32" aria-label="Source 32">[32]</a><a class="cite" href="sources.html#src-33" aria-label="Source 33">[33]</a> (both secondary summaries; I did not read the paper).</li>
+</ul>
+<p>Practical rule: pick the model with your own evaluation, on the runtime that will be used in production, at the quantization that will be used.</p>
+<h2 id="recommendations-per-ram-tier">Recommendations per RAM tier</h2>
+<p>These assume a dedicated mini with no desktop apps competing for memory. The 24 GB study that hit swap had 12 to 13 GB committed to other apps before loading a model <a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a>. Speeds for the base M4 are my inference from the rows above unless a row is cited; they are not measurements.</p>
+<div class="table-wrap" role="region" aria-label="Recommendations per RAM tier table" tabindex="0">
+<table class="c6">
+<thead><tr>
+<th scope="col">Tier</th>
+<th scope="col">Chip</th>
+<th scope="col">(a) Fast assistant chat and tool calls</th>
+<th scope="col">(b) Long-horizon agent work</th>
+<th scope="col">Context in practice</th>
+<th scope="col">Honest verdict</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">16 GB</th>
+<td>M4</td>
+<td>Gemma 4 E4B or Qwen 3.5 9B at 4-bit (about 18 tok/s estimated for the 9B <a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a>). Mellum2.1-12B-A2.5B if coding-flavoured answers are fine (about 50 tok/s on a 16 GB M4, community <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>).</td>
+<td>Do not. Use hosted.</td>
+<td>16K to 32K</td>
+<td>Fine as a voice and chat endpoint and for classification. A 9B model dropped 25 to 39 points against a frontier model in agent benchmarks <a class="cite" href="sources.html#src-14" aria-label="Source 14">[14]</a> and skipped tools in a hands-on test <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a>.</td>
+</tr>
+<tr>
+<th scope="row">24 GB</th>
+<td>M4 or M4 Pro</td>
+<td>Gemma 4 26B-A4B at 4-bit (16 GB of weights <a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a>) or LFM2.5-24B-A2B (59.9 tok/s in a community run on a 24 GB M4 <a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a>) or gpt-oss 20b with reasoning set high.</td>
+<td>Marginal. A 30B-A3B MoE at 4-bit fits only on a headless machine with a capped context; the 35B-A3B class crashed at 20.4 GB on a loaded 24 GB machine <a class="cite" href="sources.html#src-29" aria-label="Source 29">[29]</a>. Nemotron 3.5 Lightning 30B-A3B is the same size class.</td>
+<td>32K, sometimes 64K</td>
+<td>Good assistant tier. Agent work is limited to narrow, structured, checkable jobs such as read-only upstream triage.</td>
+</tr>
+<tr>
+<th scope="row">32 GB</th>
+<td>M4</td>
+<td>Same as 24 GB, with room for STT and TTS models alongside.</td>
+<td>Qwen 3.6-35B-A3B at 4-bit (23 to 24 GB <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>) or Recursive Flint (23 GB <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>). Qwen 3.8-27B dense fits at 18 GB but is slow: about 10 tok/s on a faster M6 <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>.</td>
+<td>32K to 64K. Flint's full 262K window needs 48 GB <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>.</td>
+<td>The first tier where a credible local coding agent runs. Expect it to be slower and less reliable than hosted, and keep context short. On a base M4 expect well under the 59 tok/s reported in community runs on an M6.</td>
+</tr>
+<tr>
+<th scope="row">64 GB</th>
+<td>M4 Pro</td>
+<td>Keep a small fast model pinned for chat and voice (Gemma 4 E4B or a 9B) and swap the big one in for work.</td>
+<td>Three sensible choices: Qwen 3.6-35B-A3B at 8-bit (39 GB in Ollama <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>; the older 3.5 version of this class measured 40 to 67 tok/s at 8-bit on this exact hardware <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>) for speed; Qwen 3.8-27B at 6 or 8-bit for quality at roughly 13 tok/s or less <a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a>; Qwen3-Coder-Next at Q4 (52 GB, 64 GB "is the practical floor" <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>) for repo-scale work.</td>
+<td>64K to 128K realistically. Full 256K fits for the 27B per one source <a class="cite" href="sources.html#src-27" aria-label="Source 27">[27]</a> but prefill time makes that slow.</td>
+<td>The only tier where local long-horizon work is worth attempting. Still below hosted frontier models.</td>
+</tr>
+</tbody></table></div>
+<h3 id="quantization-guidance">Quantization guidance</h3>
+<ul>
+<li>4-bit is the floor for agent work. Hermes Agent refuses to offer anything lower because "the quality loss is too severe" <a class="cite" href="sources.html#src-5" aria-label="Source 5">[5]</a>. Sub-4-bit builds produced erratic results in hands-on testing <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a>.</li>
+<li>For MoE models with about 3B active parameters, speed is cheap, so spend spare memory on 6 or 8-bit weights rather than a larger model.</li>
+<li>Prefer builds from the model vendor, Unsloth, <code>ggml-org</code>, <code>lmstudio-community</code> or <code>mlx-community</code>, and test the exact file. Publisher matters <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a>.</li>
+<li>Do not quantize the KV cache aggressively for tool-calling work <a class="cite" href="sources.html#src-32" aria-label="Source 32">[32]</a>.</li>
+<li>Set context explicitly. Ollama defaults to 4,096 tokens and silently truncates; llama.cpp also truncates unless the slot context is raised <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a><a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>.</li>
+</ul>
+<h2 id="where-local-still-falls-short-and-the-hybrid-pattern">Where local still falls short, and the hybrid pattern</h2>
+<ul>
+<li>METR's May 2026 report put the public frontier at about 12 hours of task length at 50% reliability and about 1.5 hours at 80% <a class="cite" href="sources.html#src-34" aria-label="Source 34">[34]</a> (secondary summary of METR). METR notes this measures task difficulty, not how long an agent can run unattended.</li>
+<li>A long-horizon terminal benchmark published in October 2026 ran 15 frontier models on tasks of up to three hours. The best scored a dense mean reward of 0.69, and on its 30 reconstruction tasks the binary pass rate averaged 0.221 <a class="cite" href="sources.html#src-13" aria-label="Source 13">[13]</a>. Frontier hosted models still fail most strict multi-hour tasks. The paper's abstract reports no open-weight results.</li>
+<li>Epoch AI's estimate, as reported, is that open weights trail the closed frontier by about four months <a class="cite" href="sources.html#src-34" aria-label="Source 34">[34]</a> (secondary). That figure is for the best open models, which are hundreds of billions of parameters. Models that fit in 64 GB are a further step down, as the 88.2 against 67 comparison above suggests.</li>
+<li>Failure modes reported for small local models in agent loops: not calling tools and claiming success, fabricating endpoints, malformed or text-only tool calls, looping, and collapse when context is truncated silently <a class="cite" href="sources.html#src-31" aria-label="Source 31">[31]</a><a class="cite" href="sources.html#src-8" aria-label="Source 8">[8]</a><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</li>
+<li>Local models have no provider-side safety filtering, so prompt injection from fetched content is a larger risk <a class="cite" href="sources.html#src-8" aria-label="Source 8">[8]</a>.</li>
+</ul>
+<h3 id="hybrid-setups-people-actually-run">Hybrid setups people actually run</h3>
+<ul>
+<li>Hosted primary with local fallback, or the reverse. Both Hermes Agent (<code>fallback_providers</code>, per-job cron model pins, <code>cron.model</code>) and OpenClaw (<code>models.mode: "merge"</code>, per-turn fallback) support this in configuration <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a><a class="cite" href="sources.html#src-8" aria-label="Source 8">[8]</a>.</li>
+<li>Local model extracts facts, deterministic code decides. This is the most robust use of a small model. A read-only upstream triage job is the standard example: the model labels, deterministic code computes priority, and nothing pushes.</li>
+<li>Local for anything that reads personal data (messages, mail, calendar), hosted for code in public repos.</li>
+<li>Frontier model at design time, local model at run time. OpenJarvis uses cloud models to search for a better local configuration and then runs fully on-device <a class="cite" href="sources.html#src-14" aria-label="Source 14">[14]</a>.</li>
+<li>A small hosted "judge" or a rules check on the output of a local worker before anything is published.</li>
+</ul>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="landscape.html"><span>Previous</span>Landscape</a>
+    <a href="runtimes.html"><span>Next</span>Runtimes</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

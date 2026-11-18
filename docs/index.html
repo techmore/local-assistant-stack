@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Local Assistant Stack: a local-first AI assistant on Mac minis and Linux</title>
+  <meta name="description" content="Is there an open-source, Siri-like local assistant with app integrations and long-horizon tasks? Not as one project. What exists, what to run on Apple Silicon Mac minis and Linux, and the gaps.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html" aria-current="page">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>No single project does this today</h1>
+    <p class="lede">The question: is there an open-source, Siri-like assistant that runs on local models, reaches your apps with real permissions and carries long tasks unattended, on Apple Silicon Mac minis and Linux? As of 2026-11-18, no. The parts exist. The integration does not.</p>
+  </header>
+  <div class="prose">
+<aside class="notice" aria-label="Research date">
+  <p><strong>Research date: 2026-11-18.</strong> This field moves monthly. Versions, star counts and benchmark figures were read on that date and will go stale. Every claim carries a confidence label, and <a href="sources.html#not-verified">what could not be verified</a> is listed in one place.</p>
+</aside>
+<h2 id="closest">What comes closest</h2>
+<p>Two projects come close enough that building a new agent from scratch would be a mistake.</p>
+<ul>
+<li><strong>Hermes Agent</strong> (Nous Research, MIT) is the closest match. It has chat, a voice mode, an on-device wake word, a managed local llama.cpp runtime, a durable cron scheduler, a task board, persistent goals, memory, macOS skills for iMessage, Reminders and Notes, and desktop apps on macOS, Windows and Linux <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a><a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a><a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a><a class="cite" href="sources.html#src-5" aria-label="Source 5">[5]</a>.</li>
+<li><strong>OpenClaw</strong> (OpenClaw Foundation, MIT) is the other. It has a macOS companion app that brokers system permissions and voice wake, more than 20 messaging channels including iMessage, and optional Docker sandboxing <a class="cite" href="sources.html#src-6" aria-label="Source 6">[6]</a><a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a><a class="cite" href="sources.html#src-8" aria-label="Source 8">[8]</a>.</li>
+</ul>
+<p>There are two different things called Hermes. The Hermes model line has not had a release since Hermes 4.3 36B in November 2025 <a class="cite" href="sources.html#src-15" aria-label="Source 15">[15]</a>. Hermes Agent is the harness, and it is very active (v0.23.2 on 2026-11-16) <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a>. Today, "Hermes underneath" should mean Hermes Agent running a Qwen or Gemma model, not a Hermes model. The full survey is on <a href="landscape.html">the landscape page</a>.</p>
+<h2 id="missing">What is missing</h2>
+<p>Neither project has these, and nothing else found does either.</p>
+<ol>
+<li><strong>A real per-app, per-action permission model</strong> enforced by the operating system rather than by the agent's own allowlists. On macOS the practical grant for Messages and Mail data is still Full Disk Access, which Apple itself is now restricting because of AI agents <a class="cite" href="sources.html#src-9" aria-label="Source 9">[9]</a><a class="cite" href="sources.html#src-10" aria-label="Source 10">[10]</a>.</li>
+<li><strong>Parity on Linux for personal data.</strong> Calendar, reminders, notes and messages on Linux are reachable only through scattered community bridges with unclear permission boundaries <a class="cite" href="sources.html#src-11" aria-label="Source 11">[11]</a>.</li>
+<li><strong>A local model reliable enough for multi-hour unattended work</strong> on a 16 to 64 GB machine. The harnesses are ready; the models that fit are not <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a><a class="cite" href="sources.html#src-13" aria-label="Source 13">[13]</a><a class="cite" href="sources.html#src-14" aria-label="Source 14">[14]</a>.</li>
+<li><strong>A tested, documented combination of all the layers</strong> (model, runtime, voice, integrations, scheduler, guardrails) for Apple Silicon minis plus Linux clients.</li>
+</ol>
+<p>The gap is the integration, the permission model, the review queue and the Linux side. That is what <a href="gaps.html">the roadmap</a> is about.</p>
+<h2 id="architecture">The recommended shape: hybrid, with a Mac mini as the hub</h2>
+<p>Keep the Mac mini on macOS as the data and inference hub, because iMessage, Reminders and Notes access is macOS only and M4 minis have no GPU inference under Linux. Pin a small model for voice and chat, swap in a work model for checkable jobs, send hard unattended jobs to a hosted model, and let nothing send or merge without passing a review queue. Mac and Linux machines are thin clients.</p>
+<figure class="diagram">
+  <div class="diagram-scroll" role="region" aria-label="Architecture diagram" tabindex="0">
+    <svg class="arch" viewBox="0 0 720 606" role="img" aria-labelledby="arch-title arch-desc">
+      <title id="arch-title">Hybrid reference architecture</title>
+      <desc id="arch-desc">Mac and Linux thin clients connect over the LAN to an agent gateway on a Mac mini running macOS. The mini holds the Apple data and serves two local models: a small pinned model for voice and chat, and a work model for triage, labels and drafts. Hard unattended code jobs go to a hosted frontier model. Output from both local and hosted work lands in a review queue, and nothing sends or merges without approval.</desc>
+      <defs>
+        <marker id="arch-head" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+          <path class="d-head" d="M0 0 L10 5 L0 10 z"/>
+        </marker>
+      </defs>
+
+      <rect class="d-box" x="20" y="16" width="330" height="76" rx="8"/>
+      <text class="d-title" x="185" y="48" text-anchor="middle">Mac client</text>
+      <text class="d-sub" x="185" y="72" text-anchor="middle">desktop app, TUI or browser</text>
+
+      <rect class="d-box" x="370" y="16" width="330" height="76" rx="8"/>
+      <text class="d-title" x="535" y="48" text-anchor="middle">Linux client</text>
+      <text class="d-sub" x="535" y="72" text-anchor="middle">desktop app, TUI or browser</text>
+
+      <text class="d-label" x="360" y="126" text-anchor="middle">LAN or tailnet, API key</text>
+
+      <rect class="d-hub" x="20" y="150" width="680" height="292" rx="12"/>
+
+      <line class="d-arrow" x1="185" y1="92" x2="185" y2="168" marker-end="url(#arch-head)"/>
+      <line class="d-arrow" x1="535" y1="92" x2="535" y2="168" marker-end="url(#arch-head)"/>
+      <rect class="d-box" x="40" y="170" width="640" height="66" rx="8"/>
+      <text class="d-title" x="360" y="198" text-anchor="middle">Agent gateway</text>
+      <text class="d-sub" x="360" y="220" text-anchor="middle">one gateway owns every session, the scheduler and approvals</text>
+
+      <rect class="d-box d-local" x="40" y="250" width="310" height="74" rx="8"/>
+      <text class="d-title" x="195" y="281" text-anchor="middle">Small pinned model</text>
+      <text class="d-sub" x="195" y="304" text-anchor="middle">voice turns and quick chat</text>
+
+      <rect class="d-box d-local" x="370" y="250" width="310" height="74" rx="8"/>
+      <text class="d-title" x="525" y="281" text-anchor="middle">Work model</text>
+      <text class="d-sub" x="525" y="304" text-anchor="middle">triage, labels, drafts; swapped in</text>
+
+      <rect class="d-box" x="40" y="338" width="640" height="62" rx="8"/>
+      <text class="d-title" x="360" y="364" text-anchor="middle">Apple data</text>
+      <text class="d-sub" x="360" y="386" text-anchor="middle">Messages, Reminders, Notes; read by local models only</text>
+
+      <text class="d-hublabel" x="360" y="427" text-anchor="middle">Mac mini on macOS: data and inference hub</text>
+
+      <line class="d-arrow" x1="185" y1="442" x2="185" y2="498" marker-end="url(#arch-head)"/>
+      <text class="d-label" x="197" y="475">code jobs, no personal data</text>
+      <line class="d-arrow" x1="535" y1="442" x2="535" y2="498" marker-end="url(#arch-head)"/>
+      <text class="d-label" x="547" y="475">drafts and reports</text>
+
+      <rect class="d-box d-hosted" x="20" y="500" width="330" height="92" rx="8"/>
+      <text class="d-title" x="185" y="530" text-anchor="middle">Hosted frontier model</text>
+      <text class="d-sub" x="185" y="553" text-anchor="middle">hard unattended jobs</text>
+      <text class="d-sub" x="185" y="574" text-anchor="middle">sandbox, PR-only, spend cap</text>
+
+      <line class="d-arrow" x1="350" y1="546" x2="368" y2="546" marker-end="url(#arch-head)"/>
+
+      <rect class="d-box d-queue" x="370" y="500" width="330" height="92" rx="8"/>
+      <text class="d-title" x="535" y="530" text-anchor="middle">Review queue</text>
+      <text class="d-sub" x="535" y="553" text-anchor="middle">drafts, reports, pull requests</text>
+      <text class="d-sub" x="535" y="574" text-anchor="middle">nothing sends or merges unapproved</text>
+    </svg>
+
+  </div>
+  <figcaption>The hybrid reference architecture. Solid boxes are roles, not products; component choices per layer are on <a href="build.html">the build page</a>. The review queue is a pattern to build, not an existing component.</figcaption>
+</figure>
+<h2 id="routing">What goes local and what goes hosted</h2>
+<p>The routing rule is what makes the hybrid safe. It puts the unreliable component, the local model, only where its output is cheap to check.</p>
+<div class="table-wrap" role="region" aria-label="What goes local and what goes hosted table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Class of work</th>
+<th scope="col">Route</th>
+<th scope="col">Reason</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Voice turns, quick questions</th>
+<td>Small local model, pinned</td>
+<td>Latency and privacy</td>
+</tr>
+<tr>
+<th scope="row">Anything that reads messages, mail, calendar, notes</th>
+<td>Local model only</td>
+<td>Private data stays in the house</td>
+</tr>
+<tr>
+<th scope="row">Drafting replies</th>
+<td>Local model writes to a review queue; nothing sends without approval</td>
+<td>Enforcement outside the model; see <a href="permissions.html#draft-but-do-not-send">draft but do not send</a></td>
+</tr>
+<tr>
+<th scope="row">Upstream triage, labelling, digests</th>
+<td>Local model plus deterministic rules, report-only</td>
+<td>The model labels, code decides; checkable</td>
+</tr>
+<tr>
+<th scope="row">Nightly repo clean-ups, multi-file changes, investigations</th>
+<td>Hosted frontier model through Claude Code or Codex CLI in a sandbox, PR-only, with a spend cap</td>
+<td>Local models that fit in 64 GB are well behind on long-horizon work</td>
+</tr>
+<tr>
+<th scope="row">Fallback when hosted is down or over budget</th>
+<td>Local work model, report-only</td>
+<td>Degrade safely</td>
+</tr>
+</tbody></table></div>
+<p>Hermes Agent expresses this with a main model, <code>fallback_providers</code>, <code>cron.model</code> and per-job pins <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a>. The reasoning behind each row is on <a href="models.html#where-local-still-falls-short-and-the-hybrid-pattern">the models page</a> and <a href="build.html">the build page</a>.</p>
+<h2 id="pages">Read further</h2>
+<ul class="cards">
+  <li><a class="card" href="landscape.html"><span class="card-title">Landscape</span><span class="card-text">Requirements matrix and survey of about thirty candidates. No row is complete.</span></a></li>
+  <li><a class="card" href="models.html"><span class="card-title">Models</span><span class="card-text">What fits in 16, 24, 32 and 64 GB, how fast, and how reliably it calls tools.</span></a></li>
+  <li><a class="card" href="runtimes.html"><span class="card-title">Runtimes</span><span class="card-text">Servers on macOS, serving a LAN, clustering results, Linux on Apple Silicon.</span></a></li>
+  <li><a class="card" href="voice.html"><span class="card-title">Voice</span><span class="card-text">Speech to text, text to speech, wake word and a latency budget.</span></a></li>
+  <li><a class="card" href="permissions.html"><span class="card-title">Permissions</span><span class="card-text">What macOS access really requires, and how to draft without sending.</span></a></li>
+  <li><a class="card" href="unattended.html"><span class="card-title">Unattended</span><span class="card-text">Scheduling, git guardrails, supervision, energy cost and fine-tuning.</span></a></li>
+  <li><a class="card" href="build.html"><span class="card-title">Build</span><span class="card-text">Three reference architectures and a first-weekend plan.</span></a></li>
+  <li><a class="card" href="gaps.html"><span class="card-title">Roadmap</span><span class="card-text">Eleven gaps, and the five this project intends to build first. Planned, not built.</span></a></li>
+  <li><a class="card" href="sources.html"><span class="card-title">Sources</span><span class="card-text">Numbered sources with dates, and everything that could not be verified.</span></a></li>
+</ul>
+<h2 id="status">Status</h2>
+<p>This project is research and a roadmap. It contains no software yet. The research was done on 2026-11-18; nothing here has been re-checked since.</p>
+  </div>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

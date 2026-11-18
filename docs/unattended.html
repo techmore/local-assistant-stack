@@ -1,0 +1,207 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Long-horizon and unattended operation | Local Assistant Stack</title>
+  <meta name="description" content="Scheduling, persistence, guardrails for jobs that touch git remotes, supervising overnight runs, energy cost, and what fine-tuning is feasible on M4 Mac minis.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html" aria-current="page">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>Long-horizon and unattended operation</h1>
+    <p class="lede">How to schedule jobs, keep their state, stop them from pushing where they should not, and find out in the morning what happened. Also energy cost and fine-tuning.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#scheduling">Scheduling</a></li>
+      <li><a href="#persistence-memory-and-checkpoints">Persistence, memory and checkpoints</a></li>
+      <li><a href="#guardrails-for-jobs-that-touch-git-remotes">Guardrails for jobs that touch git remotes</a></li>
+      <li><a href="#supervising-overnight-runs">Supervising overnight runs</a></li>
+      <li><a href="#cost-and-energy">Cost and energy</a></li>
+      <li><a href="#fine-tuning-and-training-on-m4-minis">Fine-tuning and training on M4 minis</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="scheduling">Scheduling</h2>
+<div class="table-wrap" role="region" aria-label="Scheduling table" tabindex="0">
+<table class="c4">
+<thead><tr>
+<th scope="col">Scheduler</th>
+<th scope="col">Where</th>
+<th scope="col">Good for</th>
+<th scope="col">Watch out for</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">launchd LaunchAgents</th>
+<td>macOS</td>
+<td>Anything that must survive reboots; runs in the user session so TCC grants apply</td>
+<td>Silent failure. A job pointed at a missing model file can fail on every start without anyone noticing. Jobs need a health check and an alert.</td>
+</tr>
+<tr>
+<th scope="row">systemd timers</th>
+<td>Linux</td>
+<td>Same, with sandboxing directives built into the unit</td>
+<td>n/a</td>
+</tr>
+<tr>
+<th scope="row">Hermes cron</th>
+<td>both</td>
+<td>Natural-language jobs, per-job model and reasoning pins, delivery to a chat or a file, script-only "no-agent" jobs, webhook-triggered jobs; <code>cron_mode: deny</code> by default <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a><a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a></td>
+<td>Unpinned jobs follow whatever the main model is when they fire. Pin the model per job.</td>
+</tr>
+<tr>
+<th scope="row">Hermes kanban and <code>/goal</code></th>
+<td>both</td>
+<td>A queue of tasks with worker processes; iterate-until-done with a judge and a turn budget <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a></td>
+<td>A judge model can be wrong; keep the turn budget low.</td>
+</tr>
+<tr>
+<th scope="row">Headless coding agents (<code>claude -p</code>, <code>codex exec</code>, <code>opencode run</code>) under launchd or systemd</th>
+<td>both</td>
+<td>Repo work with the strongest models</td>
+<td>Exact flags not re-verified today.</td>
+</tr>
+<tr>
+<th scope="row">OpenClaw cron and heartbeat</th>
+<td>both</td>
+<td>Similar to Hermes</td>
+<td>Not re-verified in detail today.</td>
+</tr>
+</tbody></table></div>
+<p>What launchd and systemd do not give you is uniform health reporting across jobs. That is <a href="gaps.html#gap-8">gap 8 on the roadmap</a>.</p>
+<h2 id="persistence-memory-and-checkpoints">Persistence, memory and checkpoints</h2>
+<ul>
+<li>Hermes Agent: session database with full-text search, agent-curated memory, optional Honcho user modelling, checkpoints and rollback, session rewind (v0.23.0) <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a><a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a>. Honcho is AGPL-3.0 <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</li>
+<li>For unattended repo work the durable state should be files and git, not model memory: a run directory per job with inputs, the prompt, the model and quantization, tool transcripts, outputs and exit status.</li>
+<li>Use git worktrees or a bare mirror per job so a failed run cannot dirty a working tree. Hermes documents worktree support <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a>.</li>
+</ul>
+<h2 id="guardrails-for-jobs-that-touch-git-remotes">Guardrails for jobs that touch git remotes</h2>
+<p>Ordered from strongest to weakest. Use several.</p>
+<ol>
+<li><strong>Credential scope.</strong> A fine-grained GitHub token limited to the specific repos, with contents read-only for triage jobs. For jobs that must write, a separate token that can push only to a bot-owned fork and open pull requests. Never your main <code>gh</code> login. A separate bot account is cleaner still.</li>
+<li><strong>Server-side rules.</strong> Branch protection or rulesets on the default branch: no direct pushes, no force pushes, required review. This holds even if the agent misbehaves.</li>
+<li><strong>No credentials in the sandbox.</strong> Run the agent in a container or under <code>srt</code> with no token; a wrapper outside the sandbox takes the resulting branch or patch file and opens the PR.</li>
+<li><strong>Local git config.</strong> A <code>pre-push</code> hook that rejects non-fast-forward pushes and any push to protected branch names; <code>receive.denyNonFastForwards</code> on local mirrors; remotes configured with a push URL that points nowhere for read-only jobs.</li>
+<li><strong>Command approval.</strong> Hermes <code>cron_mode: deny</code> and command allowlists; OpenClaw tool deny policies <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a>. These depend on pattern matching and are the weakest layer.</li>
+<li><strong>Output contract.</strong> Every job ends in one of: a Markdown report, a patch file, or a draft PR. Nothing merges without a human.</li>
+</ol>
+<p>For pulling and triaging upstream changes across forks, the right approach is: <code>git cherry</code> for patches not yet upstream, <code>git merge-tree</code> for a clean-merge check with no working tree, the model labelling only.</p>
+<h2 id="supervising-overnight-runs">Supervising overnight runs</h2>
+<ul>
+<li>A morning digest: one message listing each job, its status, duration, tokens used, and links to the report or PR. Hermes cron can deliver to any configured channel <a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a>. OpenJarvis ships a morning-digest preset <a class="cite" href="sources.html#src-19" aria-label="Source 19">[19]</a>.</li>
+<li>Hard limits: wall-clock timeout per job, maximum turns, and for hosted models a spend cap. Hermes v0.23.0 added hard spending limits at the gateway and per-delegation cost reporting <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a>.</li>
+<li>A dead-man check: if the digest does not arrive, that is the alert.</li>
+<li>Keep transcripts. When a local model claims it ran tests, the transcript is the only way to check.</li>
+<li>Start every new job type in report-only mode for a week before allowing it to open PRs.</li>
+</ul>
+<h2 id="cost-and-energy">Cost and energy</h2>
+<p>Using Apple's wall-power figures <a class="cite" href="sources.html#src-26" aria-label="Source 26">[26]</a> and an assumed electricity price of 0.17 USD per kWh (my assumption; substitute the real rate):</p>
+<div class="table-wrap" role="region" aria-label="Cost and energy table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Scenario</th>
+<th scope="col">Energy per year</th>
+<th scope="col">Cost per year</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">M4 mini idle all year (4 W)</th>
+<td>35 kWh</td>
+<td>about 6 USD</td>
+</tr>
+<tr>
+<th scope="row">M4 mini at maximum 8 h per night, idle otherwise</th>
+<td>about 213 kWh</td>
+<td>about 36 USD</td>
+</tr>
+<tr>
+<th scope="row">M4 Pro mini idle all year (5 W)</th>
+<td>44 kWh</td>
+<td>about 7 USD</td>
+</tr>
+<tr>
+<th scope="row">M4 Pro mini at maximum 8 h per night, idle otherwise</th>
+<td>about 438 kWh</td>
+<td>about 74 USD</td>
+</tr>
+</tbody></table></div>
+<p>Maximum draw is an upper bound; inference load is normally below it. Energy is not the constraint. The real costs are the hardware, your time, and hosted tokens for the hard steps. I did not verify hosted model prices today and so give none. I also did not verify current Mac mini prices; the M4 generation is no longer the current one.</p>
+<h2 id="fine-tuning-and-training-on-m4-minis">Fine-tuning and training on M4 minis</h2>
+<p>What the tooling does (verified from mlx-lm's <code>LORA.md</code>) <a class="cite" href="sources.html#src-52" aria-label="Source 52">[52]</a>: <code>mlx_lm.lora</code> supports LoRA, DoRA and full fine-tuning; pointing it at a quantized model gives QLoRA automatically; <code>mlx_lm.fuse</code> merges adapters and can export GGUF for a limited set of architectures; memory is reduced with smaller batch size, fewer layers and gradient checkpointing. MLX-LoRA-Studio is a native Mac GUI for the same (MIT, 290 stars) <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<p>Data points, all secondary and none on a Mac mini specifically <a class="cite" href="sources.html#src-53" aria-label="Source 53">[53]</a>:</p>
+<ul>
+<li>Gemma 4 E2B, 600 iterations, LoRA on 8 layers: about 4 GB peak, about five minutes.</li>
+<li>Qwen 3.5 9B on an M4 Max 64 GB: about two hours for 600 iterations on a small dataset.</li>
+<li>Sizing guidance conflicts between guides. One says 16 GB handles 7 to 8B QLoRA; another says to stay at about 3B on 16 GB.</li>
+</ul>
+<p>A working example of what a small adapter buys: Speakrail ships a Gemma 4 E4B LoRA that makes turn-taking decisions in one token per event <a class="cite" href="sources.html#src-44" aria-label="Source 44">[44]</a>.</p>
+<p>Realistic scale on the minis, as my estimate from the above and from the bandwidth gap between an M4 Max and a base M4:</p>
+<div class="table-wrap" role="region" aria-label="Fine-tuning and training on M4 minis table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Machine</th>
+<th scope="col">Feasible</th>
+<th scope="col">Not feasible</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">M4 16 to 24 GB</th>
+<td>QLoRA adapters on 2 to 9B models, hundreds to a few thousand examples, minutes to a few hours</td>
+<td>Anything 12B and up at useful sequence lengths</td>
+</tr>
+<tr>
+<th scope="row">M4 32 GB</th>
+<td>QLoRA up to about 12B; 9B comfortably</td>
+<td>27B and up</td>
+</tr>
+<tr>
+<th scope="row">M4 Pro 64 GB</th>
+<td>QLoRA on 12 to 27B with short sequences and small batches, overnight</td>
+<td>Full fine-tunes; MoE 35B-class adapters are untested territory</td>
+</tr>
+</tbody></table></div>
+<p>Training from scratch or full fine-tuning of anything useful is not a mini workload. The sensible use here is narrow: train a small adapter on gold labels for one narrow task, such as triage labelling, so a 4 to 9B model does it at high speed, and measure it against a rules baseline. Rent a GPU for anything bigger.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="permissions.html"><span>Previous</span>Permissions</a>
+    <a href="build.html"><span>Next</span>Build</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

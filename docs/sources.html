@@ -1,0 +1,151 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Sources and what could not be verified | Local Assistant Stack</title>
+  <meta name="description" content="The numbered source list behind every citation on this site, with dates, plus the list of claims that could not be verified and places where sources conflict.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html" aria-current="page">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>Sources</h1>
+    <p class="lede">Every bracketed number on this site points here. The list of what could not be verified comes first, because it matters more than the list of what could.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#confidence-labels">How to read the confidence labels</a></li>
+      <li><a href="#not-verified">What could not be verified, and where sources conflict</a></li>
+      <li><a href="#numbered-sources">Numbered sources</a></li>
+      <li><a href="#public-repositories">Public repositories read</a></li>
+      <li><a href="#full-report">Full report</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="confidence-labels">How to read the confidence labels</h2>
+<ul>
+<li><strong>Verified</strong>: read on 2026-11-18 from a primary source (repo, release notes, project docs, vendor page, paper).</li>
+<li><strong>Secondary</strong>: from a blog, index or news site. Treated as directional.</li>
+<li><strong>Not verified</strong>: could not be confirmed on 2026-11-18. Stated so in place.</li>
+</ul>
+<p>Repo statistics (stars, license, last push, latest release) were read from the GitHub API on 2026-11-18. Model listings were read from the Hugging Face API on that date. "I" in the text is the author of the research report.</p>
+<h2 id="not-verified">What could not be verified, and where sources conflict</h2>
+<ul>
+<li>M4 base memory bandwidth, Thunderbolt version and RAM configurations: from prior knowledge, not re-checked.</li>
+<li>Exact output throughput for Qwen 3.8-27B and Qwen 3.6-35B-A3B at 4-bit on the M5 Pro in SiliconBench: those are in a figure; the extracted text shows axes topping out near 6 tok/s for the dense model and 30 tok/s for the MoE under agent prompts, which I could not read precisely.</li>
+<li>Most token-per-second rows for the base M4 are estimates from a bandwidth model, and one measured study found such estimates 1.5 to 2x optimistic under load <a class="cite" href="#src-29" aria-label="Source 29">[29]</a><a class="cite" href="#src-30" aria-label="Source 30">[30]</a>.</li>
+<li>Ollama's MLX default: secondary sources disagreed on the version. The official v0.40.0 release notes (2026-09-25) settle it <a class="cite" href="#src-38" aria-label="Source 38">[38]</a>. SiliconBench's negative Ollama findings predate that release (August builds) and may no longer hold.</li>
+<li>Hermes Agent feature descriptions come from the docs at v0.21.4 (2026-09-26) plus the v0.22.0 and v0.23.0 release notes. I did not read the v0.23.2 docs in full.</li>
+<li>OpenClaw: I did not confirm whether its macOS speech recognition is on-device, the current state of its Linux app, or its cron feature in detail.</li>
+<li>Feature claims for Open WebUI, AnythingLLM, Jan, Khoj, Onyx, LocalAI, Letta, OpenHands, Goose scheduling, LM Studio's headless mode and Msty were not checked feature by feature today.</li>
+<li>Apple: open-sourcing of the Foundation Models core and its Linux support; the Siri "Extensions" and model delegation reports; SiriKit deprecation. All secondary. Apple's own page confirms only the LanguageModel protocol and App Intents schemas <a class="cite" href="#src-20" aria-label="Source 20">[20]</a>.</li>
+<li>No hosted frontier scores on Terminal-Bench 2.1 from a primary source; the GLM-5.3 figure of 88.2 is cited by one secondary page <a class="cite" href="#src-27" aria-label="Source 27">[27]</a>.</li>
+<li>Tool-calling benchmark figures for Qwen 3.6 and Gemma 4 come from secondary summaries of vendor cards and one arXiv paper I did not read <a class="cite" href="#src-32" aria-label="Source 32">[32]</a><a class="cite" href="#src-33" aria-label="Source 33">[33]</a>.</li>
+<li>Kokoro latency on Apple Silicon: one unverified M5 Max figure <a class="cite" href="#src-45" aria-label="Source 45">[45]</a>.</li>
+<li>METR doubling-time figures conflict across secondary sources; I did not use them.</li>
+<li>Hosted model prices and current Mac mini prices were not checked.</li>
+<li>The electricity price is an assumption.</li>
+</ul>
+<h2 id="numbered-sources">Numbered sources</h2>
+<p>Dates are publication or release dates where known; "accessed" means read on 2026-11-18.</p>
+<ol class="sources">
+<li id="src-1">Hermes Agent releases v0.22.0 (2026-10-13), v0.23.0 (2026-11-05), v0.23.2 (2026-11-16). <a href="https://github.com/NousResearch/hermes-agent/releases">https://github.com/NousResearch/hermes-agent/releases</a> (accessed through the GitHub API)</li>
+<li id="src-2">Hermes Agent documentation: cron, goals, heartbeat, kanban, fallback providers, checkpoints. Read at v0.21.4 canary, commit 40989563ec, 2026-09-26. Online: <a href="https://hermes-agent.nousresearch.com/docs/">https://hermes-agent.nousresearch.com/docs/</a></li>
+<li id="src-3">Hermes Agent documentation: security, TTS, computer use, BlueBubbles, Photon, email, bundled Apple skills (<code>skills/apple/</code>). Same version, 2026-09-26.</li>
+<li id="src-4">Hermes Agent documentation: voice mode and wake word. Same version, 2026-09-26.</li>
+<li id="src-5">Hermes Agent documentation: local models. Same version, 2026-09-26.</li>
+<li id="src-6">OpenClaw README. <a href="https://github.com/openclaw/openclaw">https://github.com/openclaw/openclaw</a> (accessed)</li>
+<li id="src-7">OpenClaw docs: sandboxing, <a href="https://docs.openclaw.ai/gateway/sandboxing">https://docs.openclaw.ai/gateway/sandboxing</a> ; macOS app, <a href="https://docs.openclaw.ai/platforms/macos">https://docs.openclaw.ai/platforms/macos</a> (accessed)</li>
+<li id="src-8">OpenClaw docs: local models. <a href="https://docs.openclaw.ai/gateway/local-models">https://docs.openclaw.ai/gateway/local-models</a> (accessed)</li>
+<li id="src-9">MacRumors, "Apple Announces 'Full Disk Access' Changes on macOS Due to AI Agents", 2026-10-02. <a href="https://macrumors.com/2026/10/02/apple-announces-macos-full-disk-access-changes">https://macrumors.com/2026/10/02/apple-announces-macos-full-disk-access-changes</a></li>
+<li id="src-10">MacRumors, "macOS 27.3 Warns Against Giving AI Apps Full Mac Control", 2026-11-16. <a href="https://macrumors.com/2026/11/16/macos-27-3-full-desk-access">https://macrumors.com/2026/11/16/macos-27-3-full-desk-access</a></li>
+<li id="src-11">Linux desktop agent bridges, search results accessed 2026-11-18: Deskbrid <a href="https://mcpservers.org/servers/coe0718/deskbrid">https://mcpservers.org/servers/coe0718/deskbrid</a> ; GNOME Desktop MCP <a href="https://mcpservers.org/servers/sbuysse/gnome-desktop-mcp">https://mcpservers.org/servers/sbuysse/gnome-desktop-mcp</a> ; mcp_dbus health check <a href="https://castrojo.github.io/jorgepilot/reports/other/mcp-dbus-health-check">https://castrojo.github.io/jorgepilot/reports/other/mcp-dbus-health-check</a> ; Newelle MCP support <a href="https://www.phoronix.com/news/GNOME-AI-Newelle-MCP-Server">https://www.phoronix.com/news/GNOME-AI-Newelle-MCP-Server</a> ; cua on Linux <a href="https://cua.ai/blog/inside-linux-computer-use">https://cua.ai/blog/inside-linux-computer-use</a></li>
+<li id="src-12">Zhang et al., "SiliconBench: Speed, Memory, and Fidelity for LLM Serving on Unified-Memory Desktops", arXiv:2609.19169, 2026-09-12. <a href="https://arxiv.org/abs/2609.19169">https://arxiv.org/abs/2609.19169</a> (PDF read in full text; Tables 3 to 10, sections 6.1 to 6.4)</li>
+<li id="src-13">"Long-Horizon-Terminal-Bench 2.0", arXiv:2610.14146, 2026-10-09. <a href="https://arxiv.org/abs/2610.14146">https://arxiv.org/abs/2610.14146</a> (abstract only)</li>
+<li id="src-14">Saad-Falcon et al., "OpenJarvis: Personal AI, On Personal Devices", arXiv:2605.17172, 2026-05-16. <a href="https://arxiv.org/abs/2605.17172">https://arxiv.org/abs/2605.17172</a> (abstract only)</li>
+<li id="src-15">Hugging Face model listings by search and by author, accessed through the API 2026-11-18. <a href="https://huggingface.co/models">https://huggingface.co/models</a> ; <a href="https://huggingface.co/NousResearch">https://huggingface.co/NousResearch</a></li>
+<li id="src-16">Nous Research, Arete-27B model card, created 2026-11-06. <a href="https://huggingface.co/NousResearch/Arete-27B">https://huggingface.co/NousResearch/Arete-27B</a></li>
+<li id="src-17">GitHub API repository and release metadata for all repos named in this report, accessed 2026-11-18. <code>https://api.github.com/repos/OWNER/NAME</code></li>
+<li id="src-18">LM Studio CLI README. <a href="https://github.com/lmstudio-ai/lms">https://github.com/lmstudio-ai/lms</a> (accessed)</li>
+<li id="src-19">OpenJarvis README. <a href="https://github.com/open-jarvis/OpenJarvis">https://github.com/open-jarvis/OpenJarvis</a> (accessed)</li>
+<li id="src-20">Apple, "WWDC26 macOS guide". <a href="https://developer.apple.com/wwdc26/guides/macos/">https://developer.apple.com/wwdc26/guides/macos/</a> (accessed; June 2026)</li>
+<li id="src-21">Apple, mlx-swift-lm and its MLXFoundationModels library. <a href="https://github.com/ml-explore/mlx-swift-lm">https://github.com/ml-explore/mlx-swift-lm</a> ; Apple WWDC26 sessions 241 and 339, <a href="https://developer.apple.com/videos/play/wwdc2026/241/">https://developer.apple.com/videos/play/wwdc2026/241/</a> and <a href="https://developer.apple.com/videos/play/wwdc2026/339/">https://developer.apple.com/videos/play/wwdc2026/339/</a> (search summaries; not viewed)</li>
+<li id="src-22">Apple WWDC26 session 240, "Build intelligent Siri experiences with App Schemas", <a href="https://developer.apple.com/videos/play/wwdc2026/240/">https://developer.apple.com/videos/play/wwdc2026/240/</a> ; SiriKit deprecation per <a href="https://www.stork.ai/blog/wwdc-2026-graded-what-apple-shipped-ios-27">https://www.stork.ai/blog/wwdc-2026-graded-what-apple-shipped-ios-27</a> (secondary)</li>
+<li id="src-23">MacRumors, "Apple's Siri AI Can Be Swapped Out for Claude, ChatGPT, Code Shows", 2026-09-14. <a href="https://macrumors.com/2026/09/14/siri-can-be-swapped-out-for-chatgpt-claude">https://macrumors.com/2026/09/14/siri-can-be-swapped-out-for-chatgpt-claude</a> (search summary)</li>
+<li id="src-24">Apple MCP servers: <a href="https://github.com/JonathanRReed/Apple-MCPs">https://github.com/JonathanRReed/Apple-MCPs</a> ; <a href="https://github.com/griches/apple-mcp">https://github.com/griches/apple-mcp</a> ; <a href="https://github.com/gabythiesse/apple-mcp-swift">https://github.com/gabythiesse/apple-mcp-swift</a> ; <a href="https://github.com/aheusingfeld/AppleMCP">https://github.com/aheusingfeld/AppleMCP</a> ; <a href="https://github.com/AndreLYL/Apple2Agent">https://github.com/AndreLYL/Apple2Agent</a> (metadata accessed; READMEs via search summary)</li>
+<li id="src-25">imsg README, v0.21.1, 2026-11-16. <a href="https://github.com/openclaw/imsg">https://github.com/openclaw/imsg</a> ; remindctl <a href="https://github.com/openclaw/remindctl">https://github.com/openclaw/remindctl</a></li>
+<li id="src-26">Apple Support, "Mac mini power consumption and thermal output". <a href="https://support.apple.com/en-us/103253">https://support.apple.com/en-us/103253</a> (accessed)</li>
+<li id="src-27">Zach Rattner, "Best local LLMs for agentic coding on Apple silicon", undated, 2026. <a href="https://zachrattner.com/projects/ai-mac-cluster/coding-models">https://zachrattner.com/projects/ai-mac-cluster/coding-models</a> (secondary; speeds calculated or community)</li>
+<li id="src-28">llmcheck.net, "Best Local LLM for Coding on Mac", updated 2026-11-14. <a href="https://llmcheck.net/blog/best-local-llm-for-coding-mac/">https://llmcheck.net/blog/best-local-llm-for-coding-mac/</a> (secondary; labels each figure as sourced, estimated or community)</li>
+<li id="src-29">scott-crenshaw, "Local LLM Feasibility Study: Mac Mini M4 (24 GB)", last push 2026-03-09. <a href="https://github.com/scott-crenshaw/local-llm-feasibility-study">https://github.com/scott-crenshaw/local-llm-feasibility-study</a> (measured, stated hardware)</li>
+<li id="src-30">llmcheck.net, "Apple Silicon LLM Benchmarks", updated 2026-11-14. <a href="https://llmcheck.net/benchmarks">https://llmcheck.net/benchmarks</a> (secondary; first half of the page read)</li>
+<li id="src-31">Rost Glukhov, "Best LLMs for OpenCode, tested locally", undated, 2026. <a href="https://www.glukhov.org/ai-devtools/opencode/llms-comparison/">https://www.glukhov.org/ai-devtools/opencode/llms-comparison/</a> (secondary; 16 GB VRAM PC)</li>
+<li id="src-32">InsiderLLM, "Best Local LLMs for Function Calling". <a href="https://insiderllm.com/guides/function-calling-local-llms/">https://insiderllm.com/guides/function-calling-local-llms/</a> (search summary)</li>
+<li id="src-33">"BekchiAI: Measuring, Observing, and Controlling LLM Agents in One Click", arXiv:2608.26867. <a href="https://arxiv.org/pdf/2608.26867">https://arxiv.org/pdf/2608.26867</a> (search summary; not read)</li>
+<li id="src-34">METR, "Frontier Risk Report (February to March 2026)", 2026-05-19. <a href="https://metr.org/blog/2026-05-19-frontier-risk-report/">https://metr.org/blog/2026-05-19-frontier-risk-report/</a> ; Epoch AI figure as reported in <a href="https://www.druva.com/blog/open-models-crossing-frontier-or-expensive">https://www.druva.com/blog/open-models-crossing-frontier-or-expensive</a> (search summaries)</li>
+<li id="src-35">llama.cpp v1.0.0 release notes, 2026-11-13. <a href="https://github.com/ggml-org/llama.cpp/releases/tag/v1.0.0">https://github.com/ggml-org/llama.cpp/releases/tag/v1.0.0</a></li>
+<li id="src-36">oMLX README, v0.8.0, 2026-11-18. <a href="https://github.com/jundot/omlx">https://github.com/jundot/omlx</a></li>
+<li id="src-37">vllm-metal README, v0.33.0, 2026-11-04. <a href="https://github.com/vllm-project/vllm-metal">https://github.com/vllm-project/vllm-metal</a></li>
+<li id="src-38">Ollama v0.40.0 release notes, 2026-09-25. <a href="https://github.com/ollama/ollama/releases/tag/v0.40.0">https://github.com/ollama/ollama/releases/tag/v0.40.0</a></li>
+<li id="src-39">AppleInsider, "AI calculations on Mac cluster gets a big boost from new RDMA support on Thunderbolt 5", 2025-12-20. <a href="https://appleinsider.com/articles/25/12/20/ai-calculations-on-mac-cluster-gets-a-big-boost-from-new-rdma-support-on-thunderbolt-5">https://appleinsider.com/articles/25/12/20/ai-calculations-on-mac-cluster-gets-a-big-boost-from-new-rdma-support-on-thunderbolt-5</a> (search summary)</li>
+<li id="src-40">Asahi Linux, "M4 Series Feature Support". <a href="https://asahilinux.org/docs/platform/feature-support/m4/">https://asahilinux.org/docs/platform/feature-support/m4/</a> (accessed; page undated)</li>
+<li id="src-41">"Building a Linux GPU Driver for the M4 Mac mini in One Month, Mostly With Coding Agents", 2026-10-24. <a href="https://dev.to/theeromi/building-a-linux-gpu-driver-for-the-m4-mac-mini-in-one-month-mostly-with-coding-agents-2pkm">https://dev.to/theeromi/building-a-linux-gpu-driver-for-the-m4-mac-mini-in-one-month-mostly-with-coding-agents-2pkm</a></li>
+<li id="src-42">Konrad Sierzputowski, "How I benchmarked on-device speech-to-text on Apple silicon (Whisper vs Parakeet)", run 2026-08-22, posted 2026-10-13. <a href="https://dev.to/konrad_sierzputowski_c86a/how-i-benchmarked-on-device-speech-to-text-on-apple-silicon-whisper-vs-parakeet-dne">https://dev.to/konrad_sierzputowski_c86a/how-i-benchmarked-on-device-speech-to-text-on-apple-silicon-whisper-vs-parakeet-dne</a></li>
+<li id="src-43">Moonshine README, v0.1.6, 2026-11-06. <a href="https://github.com/moonshine-ai/moonshine">https://github.com/moonshine-ai/moonshine</a></li>
+<li id="src-44">Speakrail README, last push 2026-11-09. <a href="https://github.com/speakrail/speakrail">https://github.com/speakrail/speakrail</a></li>
+<li id="src-45">Contra Collective, "Kokoro vs Piper vs XTTS v2: Local Text to Speech on M5 Max (2026)". <a href="https://contracollective.com/blog/kokoro-vs-piper-vs-xtts-local-text-to-speech-m5-max-2026">https://contracollective.com/blog/kokoro-vs-piper-vs-xtts-local-text-to-speech-m5-max-2026</a> (search summary; unverified)</li>
+<li id="src-46">Kyutai, Pocket TTS README. <a href="https://github.com/kyutai-labs/pocket-tts">https://github.com/kyutai-labs/pocket-tts</a></li>
+<li id="src-47">mlx-audio README, v0.6.6, 2026-11-16. <a href="https://github.com/Neywa-Labs/mlx-audio">https://github.com/Neywa-Labs/mlx-audio</a> ; FluidAudio README, v0.18.3, 2026-11-07. <a href="https://github.com/FluidInference/FluidAudio">https://github.com/FluidInference/FluidAudio</a></li>
+<li id="src-48">"Building a Local Voice AI Stack: Whisper + Ollama + Kokoro TTS on Apple Silicon". <a href="https://dev.to/xadenai/building-a-local-voice-ai-stack-whisper-ollama-kokoro-tts-on-apple-silicon-eo0">https://dev.to/xadenai/building-a-local-voice-ai-stack-whisper-ollama-kokoro-tts-on-apple-silicon-eo0</a> (search summary; stage numbers are the author's estimates)</li>
+<li id="src-49">macOS agent sandboxing write-ups, 2026: <a href="https://importstatic.com/ai/sandbox-coding-agent-macos">https://importstatic.com/ai/sandbox-coding-agent-macos</a> ; <a href="https://www.metasimple.org/2026/07/29/coding-agent-sandboxing-pitfalls-on-macos.html">https://www.metasimple.org/2026/07/29/coding-agent-sandboxing-pitfalls-on-macos.html</a> ; <a href="https://gist.github.com/wincent/2752d8d97727577050c043e4ff9e386e">https://gist.github.com/wincent/2752d8d97727577050c043e4ff9e386e</a> ; <a href="https://www.infralovers.com/blog/2026-02-15-sandboxing-claude-code-macos/">https://www.infralovers.com/blog/2026-02-15-sandboxing-claude-code-macos/</a> (search summaries)</li>
+<li id="src-50">Anthropic Sandbox Runtime README. <a href="https://github.com/anthropics/sandbox-runtime">https://github.com/anthropics/sandbox-runtime</a></li>
+<li id="src-51">NanoClaw README. <a href="https://github.com/nanocoai/nanoclaw">https://github.com/nanocoai/nanoclaw</a></li>
+<li id="src-52">mlx-lm, <code>mlx_lm/LORA.md</code>, v0.32.2, 2026-10-16. <a href="https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md">https://github.com/ml-explore/mlx-lm/blob/main/mlx_lm/LORA.md</a></li>
+<li id="src-53">MLX fine-tuning write-ups: <a href="https://medium.com/@able_wong/part-3-fine-tuning-gemma-4-on-a-mac-mini-and-what-the-results-taught-me-4200ce5523e2">https://medium.com/@able_wong/part-3-fine-tuning-gemma-4-on-a-mac-mini-and-what-the-results-taught-me-4200ce5523e2</a> ; <a href="https://willitrunai.com/blog/qwen-3-5-mlx-apple-silicon-guide">https://willitrunai.com/blog/qwen-3-5-mlx-apple-silicon-guide</a> (search summaries)</li>
+</ol>
+<h2 id="public-repositories">Public repositories read</h2>
+<p>Read through <code>gh</code> on 2026-11-18: <a href="https://github.com/techmore/omarchy-mlx-upstream">techmore/omarchy-mlx-upstream</a> (README; a fork of joshuaswarren/omarchy-mlx) and its upstream <code>docs/ENGINES.md</code>, <a href="https://github.com/techmore/omarchy-ane">techmore/omarchy-ane</a> (README; a fork), <a href="https://github.com/techmore/blueferry">techmore/blueferry</a> (README; a fork of erikwb/blueferry).</p>
+<h2 id="full-report">Full report</h2>
+<p>The pages of this site are cut from one report. A copy with private details removed is kept as <a href="report.md">report.md</a> in this site's folder, and is easier to read <a href="https://github.com/techmore/local-assistant-stack/blob/main/docs/report.md">rendered on GitHub</a>.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="gaps.html"><span>Previous</span>Roadmap</a>
+    <a href="index.html"><span>Next</span>Overview</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

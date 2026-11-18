@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Roadmap: the gaps this project intends to fill | Local Assistant Stack</title>
+  <meta name="description" content="Eleven gaps no existing project fills, framed as a roadmap: permission broker, review queue, reference deployment, model-selection harness and job supervisor first. Planned, not built.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html" aria-current="page">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>Roadmap: gaps that no existing project fills</h1>
+    <p class="lede">Eleven things the research looked for and did not find. Five of them are what this project intends to build first. All of it is planned; none of it exists yet.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#status">Status</a></li>
+      <li><a href="#planned-first">Planned first</a></li>
+      <li><a href="#larger-builds-later">Larger builds, later</a></li>
+      <li><a href="#other-open-gaps">Other open gaps</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="status">Status</h2>
+<p>Nothing on this page has been built. This repository holds research and a roadmap. It contains no software yet, and nothing below should be read as a description of working code.</p>
+<p>Each gap is stated as something the research looked for and did not find. An absence of search results is not proof that nothing exists.</p>
+<p>The plan is to take Hermes Agent as the base rather than write a new agent, build items 1, 2, 4, 5 and 8 first, and publish the measurements on this site. Items 3 and 7 are the larger builds.</p>
+<h2 id="planned-first">Planned first</h2>
+<h3 id="gap-1">1. A scoped permission broker for personal data</h3>
+<p class="status"><span class="badge b-planned">Planned, not built</span></p>
+<p>Small single-purpose helpers that hold one narrow OS grant each (Messages read, Messages send-with-approval, Mail drafts, Calendar) and expose a minimal, logged API to any agent. Today the agent's host process holds Full Disk Access and Automation rights, and scoping is done by prompts and allowlists. Apple's 27.3 changes make this urgent <a class="cite" href="sources.html#src-9" aria-label="Source 9">[9]</a><a class="cite" href="sources.html#src-10" aria-label="Source 10">[10]</a>.</p>
+<h3 id="gap-2">2. A cross-agent review queue</h3>
+<p class="status"><span class="badge b-planned">Planned, not built</span></p>
+<p>A standard "draft, approve, send" outbox for messages, mail and PRs, with enforcement outside the model, usable from Hermes, OpenClaw or a coding agent. Only fragments exist (Apple2Agent's mail approval, exec approval prompts).</p>
+<h3 id="gap-4">4. One assistant across macOS and Linux with the Mac as data hub</h3>
+<p class="status"><span class="badge b-planned">Planned, not built</span></p>
+<p>A documented, tested topology: gateway and Apple data on a mini, Linux and Mac thin clients, voice satellites, with authentication. The pieces exist in Hermes v0.23; the reference deployment does not.</p>
+<h3 id="gap-5">5. An honest, reproducible model-selection harness for personal-agent tasks on Apple Silicon</h3>
+<p class="status"><span class="badge b-planned">Planned, not built</span></p>
+<p>Per RAM tier, per runtime, per quantization, measuring tool-call correctness, refusal to fake results, time to first token with and without cache, and memory. SiliconBench covers serving engines on an M5 Pro and one pair of M4 Pros <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>; the public indexes are mostly estimates <a class="cite" href="sources.html#src-30" aria-label="Source 30">[30]</a>.</p>
+<h3 id="gap-8">8. A local-first supervisor for unattended jobs</h3>
+<p class="status"><span class="badge b-planned">Planned, not built</span></p>
+<p>Run directories, transcripts, budgets, digests, dead-man alerts and a uniform health view across launchd and systemd jobs and across harnesses. Each agent has its own partial version.</p>
+<h2 id="larger-builds-later">Larger builds, later</h2>
+<h3 id="gap-3">3. Linux parity for personal data</h3>
+<p class="status"><span class="badge b-later">Planned later, not built</span></p>
+<p>A permissioned bridge for calendar, contacts, notes and messages on Linux, including on Hyprland-based desktops, and an agent adapter for blueferry.</p>
+<h3 id="gap-7">7. A native macOS front end that bridges App Intents and Shortcuts to a local agent</h3>
+<p class="status"><span class="badge b-later">Planned later, not built</span></p>
+<p>macOS 27 allows a third-party model behind Apple's session API and lets Siri reach app content through schemas <a class="cite" href="sources.html#src-20" aria-label="Source 20">[20]</a><a class="cite" href="sources.html#src-21" aria-label="Source 21">[21]</a>. An open project that exposes a self-hosted agent's actions as App Intents, and system intents as agent tools, would give OS-enforced consent for free.</p>
+<h2 id="other-open-gaps">Other open gaps</h2>
+<p>These were found by the same research. They are not on the first-pass plan.</p>
+<h3 id="gap-6">6. Measured voice latency on M4-class Macs</h3>
+<p class="status"><span class="badge b-open">Open gap, not scheduled</span></p>
+<p>I found component numbers and an RTX 4090 end-to-end figure, but no published end-to-end measurement for a cascaded or full-duplex assistant on an M4 mini.</p>
+<h3 id="gap-9">9. Guardrail templates for git work</h3>
+<p class="status"><span class="badge b-open">Open gap, not scheduled</span></p>
+<p>Ready-made token scopes, hooks, rulesets and wrapper scripts for "read-only triage" and "PR-only changes", tested against several agents.</p>
+<h3 id="gap-10">10. Linux inference on M3 and M4</h3>
+<p class="status"><span class="badge b-open">Open gap, not scheduled</span></p>
+<p>Blocked on a Vulkan driver. omarchy-mlx has a tester kit that asks for M4 hardware.</p>
+<h3 id="gap-11">11. Small task-specific adapters as a supported workflow</h3>
+<p class="status"><span class="badge b-open">Open gap, not scheduled</span></p>
+<p>Collect traces, label with a hosted model, train a LoRA with MLX on a mini, evaluate, deploy to the pinned small model. OpenJarvis points in this direction <a class="cite" href="sources.html#src-19" aria-label="Source 19">[19]</a>; there is no packaged path for a home setup.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="build.html"><span>Previous</span>Build</a>
+    <a href="sources.html"><span>Next</span>Sources</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

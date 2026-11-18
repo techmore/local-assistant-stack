@@ -1,0 +1,234 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Runtimes, LAN serving and clustering | Local Assistant Stack</title>
+  <meta name="description" content="Model servers on macOS compared, how to run one always-on server for a LAN, measured results from clustering two Mac minis, and the state of Linux inference on Apple Silicon.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html" aria-current="page">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>The runtime layer</h1>
+    <p class="lede">Which server to run on macOS, how to expose it to a LAN, what clustering two minis actually gains, and why M4 minis stay on macOS for inference.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#servers-on-macos">Servers on macOS</a></li>
+      <li><a href="#one-always-on-server-for-the-lan">One always-on server for the LAN</a></li>
+      <li><a href="#clustering-multiple-minis">Clustering multiple minis</a></li>
+      <li><a href="#linux-on-apple-silicon">Linux on Apple Silicon</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="servers-on-macos">Servers on macOS</h2>
+<p>All figures verified through the GitHub API on 2026-11-18 unless marked <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<div class="table-wrap" role="region" aria-label="Servers on macOS table" tabindex="0">
+<table class="c6">
+<thead><tr>
+<th scope="col">Runtime</th>
+<th scope="col">Version, date</th>
+<th scope="col">License</th>
+<th scope="col">Strengths</th>
+<th scope="col">Weaknesses</th>
+<th scope="col">Use it for</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">llama.cpp <code>llama-server</code></th>
+<td>v1.0.0, 2026-11-13</td>
+<td>MIT</td>
+<td>Passed all three SiliconBench gates (completion, fidelity, model coverage). Low, flat memory. Most reliable tool-call completion in that test. OpenAI-compatible API, now including <code>/v1/audio/speech</code>. v1.0.0 added server hardening against SSRF, CORS and DNS rebinding, which matters for LAN exposure <a class="cite" href="sources.html#src-35" aria-label="Source 35">[35]</a><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>Slower decode than MLX stacks on the same model (40.0 against 49.3 tok/s on the M4 Pro) <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>. Default four server slots; latency grows under concurrency.</td>
+<td>The default for agent work. Also runs identically on Linux.</td>
+</tr>
+<tr>
+<th scope="row">oMLX</th>
+<td>v0.8.0, 2026-11-18</td>
+<td>Apache-2.0</td>
+<td>MLX speed, continuous batching, a hot memory plus cold SSD KV cache that survives context changes, model pinning and auto-swap, menu bar app, OpenAI-compatible API on port 8000, optional MCP. Passed all three SiliconBench gates <a class="cite" href="sources.html#src-36" aria-label="Source 36">[36]</a><a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>Memory "grows, bounded". 94 of 100 on the agent split. Some model families need custom Metal kernels that require full Xcode to build <a class="cite" href="sources.html#src-36" aria-label="Source 36">[36]</a>. Single maintainer listed.</td>
+<td>An always-on mini that serves several clients and swaps between a pinned small model and a larger one.</td>
+</tr>
+<tr>
+<th scope="row">vllm-metal</th>
+<td>v0.33.0, 2026-11-04</td>
+<td>Apache-2.0</td>
+<td>Best throughput under concurrency and lowest time to first token under load in SiliconBench; passed all three gates; has a sleep mode that returns memory when idle <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a><a class="cite" href="sources.html#src-37" aria-label="Source 37">[37]</a>.</td>
+<td>Heavier to set up. Default context below agent prompt sizes, so it rejects long prompts unless raised <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>Several agents hitting one server at once.</td>
+</tr>
+<tr>
+<th scope="row">mlx-lm <code>mlx_lm.server</code></th>
+<td>v0.32.2, 2026-10-16</td>
+<td>MIT</td>
+<td>Reference MLX server. Simple. Supports tensor parallelism over Thunderbolt RDMA <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>Only 56 of 100 on the Gemma 4 agent split and partial runs on larger models in SiliconBench <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>Quick tests and LoRA training, not production agent serving.</td>
+</tr>
+<tr>
+<th scope="row">Ollama</th>
+<td>v0.40.16, 2026-11-09</td>
+<td>MIT</td>
+<td>Easiest model management. Since v0.40.0 (2026-09-25) supported architectures run on MLX by default on Apple Silicon <a class="cite" href="sources.html#src-38" aria-label="Source 38">[38]</a>.</td>
+<td>In SiliconBench's August build it held 94 to 97% of the Metal memory hint, failed five-shot fidelity on one model, and covered one of three model releases <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>. Default 4,096-token context <a class="cite" href="sources.html#src-28" aria-label="Source 28">[28]</a>.</td>
+<td>Convenience, and apps that already speak the Ollama API, such as <a href="https://github.com/techmore/weather-me-timbers">weather-me-timbers</a>. Re-test before trusting it for tool calls.</td>
+</tr>
+<tr>
+<th scope="row">LM Studio, llmster</th>
+<td><code>lms</code> CLI pushed 2026-11-17</td>
+<td>App closed; CLI MIT</td>
+<td>Good GUI, headless daemon mentioned in the CLI README <a class="cite" href="sources.html#src-18" aria-label="Source 18">[18]</a>.</td>
+<td>Closed source core. Headless details not verified today.</td>
+<td>Optional.</td>
+</tr>
+<tr>
+<th scope="row">EXO</th>
+<td>v1.0.71, 2026-04-23; last push 2026-11-06</td>
+<td>Apache-2.0</td>
+<td>Fastest single-node number in SiliconBench on the M4 Pro (66.8 tok/s), and the best two-node scaling <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</td>
+<td>No tagged release in seven months. The benchmark that favours it was co-authored by EXO Labs.</td>
+<td>Clustering experiments only.</td>
+</tr>
+<tr>
+<th scope="row">Hermes managed llama.cpp</th>
+<td>part of Hermes Agent</td>
+<td>MIT</td>
+<td>No configuration; hardware-aware quantization choice; 64K context guarantee; idle unload <a class="cite" href="sources.html#src-5" aria-label="Source 5">[5]</a>.</td>
+<td>Tied to Hermes.</td>
+<td>A single-machine setup where Hermes is the only client.</td>
+</tr>
+</tbody></table></div>
+<h2 id="one-always-on-server-for-the-lan">One always-on server for the LAN</h2>
+<p>This works and is the standard pattern. Every runtime above exposes an OpenAI-compatible endpoint. Points that matter:</p>
+<ul>
+<li>Bind to the LAN interface or a tailnet address, not to all interfaces, and require an API key. llama.cpp, oMLX and vllm-metal support keys; verify the exact flags against current docs.</li>
+<li>Keep the mini from sleeping, and run the server as a LaunchDaemon or LaunchAgent with KeepAlive. A crash-looping job pointed at a missing model file is easy to miss; add a health check.</li>
+<li>Set context length explicitly on the server and tell the client the same number.</li>
+<li>Turn prompt caching on and keep system prompts and tool lists stable so the prefix stays cached.</li>
+<li>One model resident at a time on 32 GB or less. On 64 GB, pin a small chat model and swap the large one.</li>
+<li>Put the agent gateway on the same Mac that holds the Apple data, because iMessage, Reminders and Notes access is macOS only. Linux machines connect as clients. Hermes Agent v0.23.0's single-gateway design and browser webapp are built for this <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a>.</li>
+</ul>
+<h2 id="clustering-multiple-minis">Clustering multiple minis</h2>
+<p>Measured on two M4 Pro 64 GB minis linked by Thunderbolt 5 with RDMA, on a model that already fits on one node <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>:</p>
+<div class="table-wrap" role="region" aria-label="Clustering multiple minis table" tabindex="0">
+<table class="c4">
+<thead><tr>
+<th scope="col">Stack</th>
+<th scope="col">One node, decode at 512 context</th>
+<th scope="col">Two nodes</th>
+<th scope="col">Speedup</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">llama.cpp (pipeline over TCP)</th>
+<td>40.0 tok/s</td>
+<td>32.4 tok/s</td>
+<td>0.80 to 0.84x, a regression</td>
+</tr>
+<tr>
+<th scope="row">mlx_lm (tensor parallel over RDMA)</th>
+<td>49.3</td>
+<td>63.3</td>
+<td>1.28 to 1.32x</td>
+</tr>
+<tr>
+<th scope="row">EXO (tensor parallel over RDMA)</th>
+<td>66.8</td>
+<td>87.0</td>
+<td>1.30 to 1.37x</td>
+</tr>
+</tbody></table></div>
+<p>Prefill roughly doubles at short contexts and gains 1.7 to 1.8x at 4K tokens <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>.</p>
+<p>Conclusions:</p>
+<ul>
+<li>Two M4 Pro minis give about 1.3x on decode, not 2x.</li>
+<li>Without RDMA, a second node makes things slower.</li>
+<li>RDMA over Thunderbolt needs Thunderbolt 5 and macOS 26.2 or later <a class="cite" href="sources.html#src-39" aria-label="Source 39">[39]</a> (secondary). The base M4 mini has Thunderbolt 4 (from prior knowledge, not re-verified), so base M4 minis cannot use it.</li>
+<li>The only strong reason to cluster is to load a model that does not fit on one machine. For minis that means stepping from a 27 to 35B model to something like Qwen3-Coder-Next or a 120B-class model across two 64 GB Pros. I found no measured mini results for that case.</li>
+<li>oMLX has an experimental multi-Mac mode in source builds <a class="cite" href="sources.html#src-36" aria-label="Source 36">[36]</a>. A related project, omarchy-cluster, targets one MLX model across Macs on macOS and Omarchy Linux (25 stars) <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</li>
+<li>The better use of several minis is separate roles: one serves the chat model and voice, one runs agent jobs, one is the spare. Independent servers give you parallelism and isolation with no cluster software.</li>
+</ul>
+<h2 id="linux-on-apple-silicon">Linux on Apple Silicon</h2>
+<div class="table-wrap" role="region" aria-label="Linux on Apple Silicon table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Question</th>
+<th scope="col">Answer today</th>
+<th scope="col">Source</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Does Asahi support the M4 mini?</th>
+<td>Device tree is in linux-asahi 7.4 (base M4) and 7.5 (M4 Pro). Wi-Fi, Bluetooth, NVMe and Ethernet are listed as working in linux-asahi. GPU, HDMI output, Thunderbolt, audio, ANE and suspend are all "TBA". There is no installer.</td>
+<td><a class="cite" href="sources.html#src-40" aria-label="Source 40">[40]</a></td>
+</tr>
+<tr>
+<th scope="row">Is there any M4 GPU driver on Linux?</th>
+<td>Gravity Linux, a Fedora remix forked from Asahi over its generative AI policy, released an alpha on 2026-09-18 with an M4 GPU driver: OpenGL ES 3.0 and OpenGL 3.3, HDMI works. Vulkan and OpenCL are listed as remaining work. Marked "FOR DEVELOPERS".</td>
+<td><a class="cite" href="sources.html#src-41" aria-label="Source 41">[41]</a></td>
+</tr>
+<tr>
+<th scope="row">Can an M4 mini run LLM inference on its GPU under Linux?</th>
+<td>No. The working paths (llama.cpp Vulkan, omarchy-mlx) need Vulkan compute, and M4 has no Vulkan driver. The omarchy-mlx README states M4 is "Not yet (no Linux GPU driver)".</td>
+<td><a class="cite" href="sources.html#src-41" aria-label="Source 41">[41]</a>, omarchy-mlx README</td>
+</tr>
+<tr>
+<th scope="row">Is the M4 ANE usable on Linux?</th>
+<td>No. omarchy-ane has an <code>h16</code> bring-up module that does not run real inference yet. Asahi lists ANE as TBA.</td>
+<td>omarchy-ane README, <a class="cite" href="sources.html#src-40" aria-label="Source 40">[40]</a></td>
+</tr>
+<tr>
+<th scope="row">What about M1 and M2 Macs on Linux?</th>
+<td>This works. omarchy-mlx reports oMLX at about 82 to 91 tok/s on an M1 Max, and llama.cpp Vulkan with patched Mesa at 27.4 tok/s on Qwen3-30B-A3B on an M1 Max (up from 1.5 tok/s on stock Mesa). M1 Pro GPU is listed as untested; M1 Pro ANE is on by default.</td>
+<td>omarchy-mlx README and <code>docs/ENGINES.md</code> (project's own measurements, October 2026)</td>
+</tr>
+<tr>
+<th scope="row">Ordinary x86 or ARM Linux</th>
+<td>llama.cpp with CUDA or Vulkan, vLLM on NVIDIA, Ollama. This is the mature path and needs no special comment.</td>
+<td>general</td>
+</tr>
+</tbody></table></div>
+<p>Conclusion: keep the M4 minis on macOS as the inference servers and treat Linux machines as clients. M1 and M2 machines are where Linux-side GPU inference is plausible today. The M1 Pro GPU is listed as untested upstream, so a test report for it would be a useful contribution. Re-check M4 status when a Vulkan driver lands; that is the single dependency.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="models.html"><span>Previous</span>Models</a>
+    <a href="voice.html"><span>Next</span>Voice</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

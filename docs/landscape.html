@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Landscape: open-source assistant candidates | Local Assistant Stack</title>
+  <meta name="description" content="Requirements matrix and survey of open-source assistant, agent and chat projects checked on 2026-11-18, with what each one covers and what it lacks.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html" aria-current="page">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>The landscape</h1>
+    <p class="lede">Is there a single project? A requirements matrix, the candidates with their repo figures, and notes on the ones that matter. No row in the matrix is complete.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#requirements-matrix">Requirements matrix</a></li>
+      <li><a href="#candidate-details">Candidate details</a></li>
+      <li><a href="#verdict">Verdict</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="requirements-matrix">Requirements matrix</h2>
+<p>Legend: Y = present and documented, P = partial or through plugins, N = absent, ? = not verified today.</p>
+<div class="table-wrap" role="region" aria-label="Requirements matrix table" tabindex="0">
+<table class="c11 matrix">
+<thead><tr>
+<th scope="col">Project</th>
+<th scope="col">Voice in/out</th>
+<th scope="col">Wake word</th>
+<th scope="col">Local models</th>
+<th scope="col">Apple app access (Mail, Messages, Calendar, Reminders, Notes)</th>
+<th scope="col">Linux personal data</th>
+<th scope="col">Permission model</th>
+<th scope="col">Scheduler / long tasks</th>
+<th scope="col">macOS</th>
+<th scope="col">Linux</th>
+<th scope="col">Fully offline possible</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Hermes Agent</th>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span> (on-device)</td>
+<td><span class="mark m-yes">Y</span> (managed llama.cpp, any OpenAI-compatible endpoint)</td>
+<td><span class="mark m-part">P</span> (skills wrapping <code>imsg</code>, <code>remindctl</code>, Notes; email by IMAP/SMTP or Himalaya; no Calendar skill found in the bundled Apple set)</td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-part">P</span> (command approval modes, allowlists, Docker backend; not OS-enforced per app)</td>
+<td><span class="mark m-yes">Y</span> (cron, kanban, goals, heartbeat)</td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span>, if you choose local STT, local TTS and a local model</td>
+</tr>
+<tr>
+<th scope="row">OpenClaw</th>
+<td><span class="mark m-yes">Y</span> (companion app)</td>
+<td><span class="mark m-yes">Y</span> (macOS app)</td>
+<td><span class="mark m-yes">Y</span> (llama.cpp managed, Ollama, LM Studio, MLX, vLLM)</td>
+<td><span class="mark m-part">P</span> (iMessage channel, <code>imsg</code>, skills)</td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-part">P</span> (macOS app brokers TCC prompts, exec approvals, optional Docker sandbox that is off by default)</td>
+<td><span class="mark m-yes">Y</span> (cron and heartbeat; not re-verified in detail today)</td>
+<td><span class="mark m-yes">Y</span> (native app)</td>
+<td><span class="mark m-part">P</span> (CLI and gateway; Linux app listed in README, docs page for it not found)</td>
+<td><span class="mark m-yes">Y</span>, with caveats the project itself documents</td>
+</tr>
+<tr>
+<th scope="row">OpenJarvis (Stanford, new in 2026)</th>
+<td><span class="mark m-part">P</span> (spoken digest preset)</td>
+<td><span class="mark m-unk">?</span></td>
+<td><span class="mark m-yes">Y</span> (local-first by design, installs Ollama)</td>
+<td><span class="mark m-part">P</span> (Gmail, Calendar, Tasks through Google OAuth; a "morning-digest-mac" preset)</td>
+<td><span class="mark m-part">P</span> (a "morning-digest-linux" preset exists)</td>
+<td><span class="mark m-unk">?</span></td>
+<td><span class="mark m-yes">Y</span> ("scheduled-monitor" preset)</td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span> for the model; connectors are cloud accounts</td>
+</tr>
+<tr>
+<th scope="row">Goose</th>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-yes">Y</span> (Ollama and others)</td>
+<td><span class="mark m-no">N</span> natively; through MCP extensions</td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-part">P</span> (extension permissions)</td>
+<td><span class="mark m-part">P</span> (recipes and scheduling; not re-verified today)</td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+</tr>
+<tr>
+<th scope="row">Leon</th>
+<td><span class="mark m-yes">Y</span> (historically)</td>
+<td><span class="mark m-yes">Y</span> (historically)</td>
+<td><span class="mark m-part">P</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td>2.0 alpha is not released; the README says the docs describe the previous version</td>
+</tr>
+<tr>
+<th scope="row">Home Assistant Assist</th>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span> (as a conversation agent)</td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-yes">Y</span>, but scoped to home entities</td>
+<td><span class="mark m-yes">Y</span> (automations)</td>
+<td>server only</td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+</tr>
+<tr>
+<th scope="row">Open Interpreter</th>
+<td><span class="mark m-no">N</span> (the 01 voice project has had no push since 2024-11-01)</td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-part">P</span></td>
+<td><span class="mark m-no">N</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+</tr>
+<tr>
+<th scope="row">Apple Siri + App Intents (macOS 27)</th>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-yes">Y</span></td>
+<td>Apple's own on-device model; third-party models through the new LanguageModel protocol</td>
+<td><span class="mark m-yes">Y</span>, first party</td>
+<td>n/a</td>
+<td><span class="mark m-yes">Y</span>, OS-enforced</td>
+<td><span class="mark m-part">P</span> (Shortcuts automations)</td>
+<td><span class="mark m-yes">Y</span></td>
+<td><span class="mark m-no">N</span></td>
+<td>Partly; not open source, not on Linux</td>
+</tr>
+</tbody></table></div>
+<p>No row is all Y. Hermes Agent and OpenClaw are the only two that have voice, wake word, local models, messaging integrations and a scheduler in one project. Hermes Agent has them on both operating systems; OpenClaw's voice and wake word are in its macOS app and its Linux side is partial.</p>
+<h2 id="candidate-details">Candidate details</h2>
+<p>All repo figures verified through the GitHub API on 2026-11-18 <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<div class="table-wrap" role="region" aria-label="Candidate details table" tabindex="0">
+<table class="c7">
+<thead><tr>
+<th scope="col">Project</th>
+<th scope="col">Repo</th>
+<th scope="col">Stars</th>
+<th scope="col">License</th>
+<th scope="col">Latest release</th>
+<th scope="col">Last push</th>
+<th scope="col">What it is</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Hermes Agent</th>
+<td>NousResearch/hermes-agent</td>
+<td>264,390</td>
+<td>MIT</td>
+<td>v0.23.2, 2026-11-16</td>
+<td>2026-11-18</td>
+<td>General personal agent with gateway, desktop, TUI, messaging, cron, skills, memory</td>
+</tr>
+<tr>
+<th scope="row">OpenClaw</th>
+<td>openclaw/openclaw</td>
+<td>394,718</td>
+<td>MIT</td>
+<td>v2026.11.5, 2026-11-17</td>
+<td>2026-11-18</td>
+<td>Personal assistant gateway with channels and companion apps; stewarded by a 501(c)(3) foundation</td>
+</tr>
+<tr>
+<th scope="row">OpenJarvis</th>
+<td>open-jarvis/OpenJarvis</td>
+<td>16,769</td>
+<td>Apache-2.0</td>
+<td>desktop-v1.0.5, 2026-11-11</td>
+<td>2026-11-18</td>
+<td>Local-first personal AI framework and research platform; created 2026-02-15</td>
+</tr>
+<tr>
+<th scope="row">NanoClaw</th>
+<td>nanocoai/nanoclaw</td>
+<td>31,119</td>
+<td>MIT</td>
+<td>not checked</td>
+<td>2026-11-18</td>
+<td>Small OpenClaw alternative; each agent in its own Linux container; created 2026-01-31</td>
+</tr>
+<tr>
+<th scope="row">nanobot</th>
+<td>HKUDS/nanobot</td>
+<td>50,176</td>
+<td>MIT</td>
+<td>not checked</td>
+<td>2026-11-18</td>
+<td>Lightweight personal agent; created 2026-02-01</td>
+</tr>
+<tr>
+<th scope="row">ZeroClaw</th>
+<td>zeroclaw-labs/zeroclaw</td>
+<td>33,403</td>
+<td>Apache-2.0</td>
+<td>not checked</td>
+<td>2026-11-18</td>
+<td>Small autonomous assistant infrastructure; created 2026-02-13</td>
+</tr>
+<tr>
+<th scope="row">PicoClaw</th>
+<td>sipeed/picoclaw</td>
+<td>30,138</td>
+<td>MIT</td>
+<td>not checked</td>
+<td>2026-11-05</td>
+<td>Tiny deployable agent; created 2026-02-04</td>
+</tr>
+<tr>
+<th scope="row">IronClaw</th>
+<td>nearai/ironclaw</td>
+<td>12,717</td>
+<td>Apache-2.0</td>
+<td>not checked</td>
+<td>2026-11-09</td>
+<td>"Agent OS" focused on privacy and security; created 2026-02-03</td>
+</tr>
+<tr>
+<th scope="row">Moltis</th>
+<td>moltis-org/moltis</td>
+<td>2,970</td>
+<td>MIT</td>
+<td>not checked</td>
+<td>2026-10-23</td>
+<td>Rust personal agent server with sandboxed execution and voice; created 2026-01-29</td>
+</tr>
+<tr>
+<th scope="row">Speakrail</th>
+<td>speakrail/speakrail</td>
+<td>215</td>
+<td>Apache-2.0</td>
+<td>not checked</td>
+<td>2026-11-09</td>
+<td>Full-duplex local voice assistant; created 2026-10-04</td>
+</tr>
+<tr>
+<th scope="row">Goose</th>
+<td>aaif-goose/goose (moved from Block to the Agentic AI Foundation at the Linux Foundation)</td>
+<td>56,747</td>
+<td>Apache-2.0</td>
+<td>v1.60.1, 2026-11-18</td>
+<td>2026-11-18</td>
+<td>General agent: desktop app, CLI, API; MCP extensions</td>
+</tr>
+<tr>
+<th scope="row">Leon</th>
+<td>leon-ai/leon</td>
+<td>17,692</td>
+<td>MIT</td>
+<td>none</td>
+<td>2026-11-18</td>
+<td>Personal assistant; 2.0 alpha in progress</td>
+</tr>
+<tr>
+<th scope="row">Home Assistant</th>
+<td>home-assistant/core</td>
+<td>92,344</td>
+<td>Apache-2.0</td>
+<td>2026.11.2, 2026-11-16</td>
+<td>2026-11-18</td>
+<td>Home automation with the Assist voice pipeline</td>
+</tr>
+<tr>
+<th scope="row">Open Interpreter</th>
+<td>openinterpreter/openinterpreter</td>
+<td>68,902</td>
+<td>Apache-2.0</td>
+<td>rust-v0.0.61, 2026-11-11</td>
+<td>2026-11-15</td>
+<td>Now described as "a coding agent for open models"</td>
+</tr>
+<tr>
+<th scope="row">01</th>
+<td>openinterpreter/01</td>
+<td>5,165</td>
+<td>AGPL-3.0</td>
+<td>n/a</td>
+<td>2024-11-01</td>
+<td>Voice interface; dormant for two years</td>
+</tr>
+<tr>
+<th scope="row">Open WebUI</th>
+<td>open-webui/open-webui</td>
+<td>159,009</td>
+<td>custom (no SPDX id)</td>
+<td>v0.13.4, 2026-11-17</td>
+<td>2026-11-18</td>
+<td>Web chat UI for local and hosted models</td>
+</tr>
+<tr>
+<th scope="row">AnythingLLM</th>
+<td>Mintplex-Labs/anything-llm</td>
+<td>68,395</td>
+<td>MIT</td>
+<td>v1.20.0, 2026-11-17</td>
+<td>2026-11-18</td>
+<td>Desktop and server chat with documents and agents</td>
+</tr>
+<tr>
+<th scope="row">Jan</th>
+<td>janhq/jan</td>
+<td>45,793</td>
+<td>custom (no SPDX id)</td>
+<td>v0.8.8, 2026-10-28</td>
+<td>2026-11-18</td>
+<td>Offline desktop chat app</td>
+</tr>
+<tr>
+<th scope="row">Khoj</th>
+<td>khoj-ai/khoj</td>
+<td>38,170</td>
+<td>AGPL-3.0</td>
+<td>2.0.0-beta.28, 2026-03-26</td>
+<td>2026-08-02</td>
+<td>"Second brain"; activity has slowed</td>
+</tr>
+<tr>
+<th scope="row">Onyx</th>
+<td>onyx-dot-app/onyx</td>
+<td>33,450</td>
+<td>custom (no SPDX id)</td>
+<td>v5.1.3, 2026-11-16</td>
+<td>2026-11-18</td>
+<td>Team AI chat and search platform</td>
+</tr>
+<tr>
+<th scope="row">LocalAI</th>
+<td>mudler/LocalAI</td>
+<td>50,432</td>
+<td>MIT</td>
+<td>v4.12.1, 2026-10-23</td>
+<td>2026-11-18</td>
+<td>OpenAI-compatible local engine for text, voice, images</td>
+</tr>
+<tr>
+<th scope="row">Letta</th>
+<td>letta-ai/letta</td>
+<td>25,480</td>
+<td>Apache-2.0</td>
+<td>0.16.8, 2026-05-14</td>
+<td>2026-10-18</td>
+<td>Stateful agent platform with memory</td>
+</tr>
+<tr>
+<th scope="row">OpenHands</th>
+<td>OpenHands/OpenHands</td>
+<td>93,731</td>
+<td>MIT</td>
+<td>v1.41.0, 2026-11-16</td>
+<td>2026-11-18</td>
+<td>Autonomous software development agent</td>
+</tr>
+<tr>
+<th scope="row">opencode</th>
+<td>anomalyco/opencode</td>
+<td>227,729</td>
+<td>MIT</td>
+<td>v1.19.6, 2026-11-17</td>
+<td>2026-11-18</td>
+<td>Terminal coding agent</td>
+</tr>
+<tr>
+<th scope="row">pi</th>
+<td>earendil-works/pi</td>
+<td>122,685</td>
+<td>MIT</td>
+<td>v1.5.2, 2026-11-10</td>
+<td>2026-11-18</td>
+<td>Agent toolkit and coding agent CLI; OpenClaw credits it</td>
+</tr>
+<tr>
+<th scope="row">Codex CLI</th>
+<td>openai/codex</td>
+<td>135,762</td>
+<td>Apache-2.0</td>
+<td>0.170.0, 2026-11-18</td>
+<td>2026-11-18</td>
+<td>Terminal coding agent</td>
+</tr>
+<tr>
+<th scope="row">Cline</th>
+<td>cline/cline</td>
+<td>71,750</td>
+<td>Apache-2.0</td>
+<td>v4.1.26, 2026-10-26</td>
+<td>2026-11-17</td>
+<td>Coding agent as SDK, IDE extension, CLI</td>
+</tr>
+<tr>
+<th scope="row">Aider</th>
+<td>Aider-AI/aider</td>
+<td>50,164</td>
+<td>Apache-2.0</td>
+<td>v0.86.0, 2025-08-09</td>
+<td>2026-05-22</td>
+<td>Terminal pair programmer; no release in 15 months</td>
+</tr>
+<tr>
+<th scope="row">Roo Code</th>
+<td>RooCodeInc/Roo-Code</td>
+<td>24,238</td>
+<td>Apache-2.0</td>
+<td>n/a</td>
+<td>2026-05-15</td>
+<td>Archived</td>
+</tr>
+<tr>
+<th scope="row">Qwen Code</th>
+<td>QwenLM/qwen-code</td>
+<td>30,746</td>
+<td>Apache-2.0</td>
+<td>not checked</td>
+<td>2026-11-18</td>
+<td>Terminal coding agent tuned for Qwen models</td>
+</tr>
+<tr>
+<th scope="row">cua</th>
+<td>trycua/cua</td>
+<td>32,583</td>
+<td>MIT</td>
+<td>2026-11-17</td>
+<td>2026-11-18</td>
+<td>Background computer-use driver for macOS, Windows, Linux; Hermes uses it</td>
+</tr>
+</tbody></table></div>
+<p>Closed or partly closed products in the brief: LM Studio (the app is closed source; the <code>lms</code> CLI is MIT, 5,439 stars, and its README mentions a headless "llmster" and a "Bionic" app for making a device available to other devices <a class="cite" href="sources.html#src-18" aria-label="Source 18">[18]</a>) and Msty (closed source; not researched further). Neither is an assistant with agency; both are model runners with chat.</p>
+<p>Notes on the individual candidates:</p>
+<p><strong>Hermes Agent.</strong> Read from the project's own docs as of v0.21.4 (2026-09-26) and from the v0.22.0 and v0.23.0 release notes <a class="cite" href="sources.html#src-1" aria-label="Source 1">[1]</a><a class="cite" href="sources.html#src-2" aria-label="Source 2">[2]</a><a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a><a class="cite" href="sources.html#src-5" aria-label="Source 5">[5]</a>:</p>
+<ul>
+<li>Voice mode in CLI, TUI and desktop, with push-to-talk, silence detection and streaming TTS. Local STT through Faster-Whisper needs no API key. TTS providers include local Piper, NeuTTS and KittenTTS, and any OpenAI-compatible endpoint such as Kokoro-FastAPI. The default TTS is Edge TTS, which is a Microsoft cloud service, so the defaults are not offline.</li>
+<li>Wake word, off by default, detected on-device. Engines: openWakeWord with a bundled "hey hermes" model, sherpa, or Porcupine. A remote desktop client can capture the microphone and stream frames to a headless backend, which fits a mini in a closet.</li>
+<li>Local models: a managed llama.cpp runtime that picks a quantization for the machine, never offers below 4-bit, guarantees at least a 64K context window for recommended models, and unloads idle models after 15 minutes. In the September docs this was a canary feature; v0.22.0 (2026-10-13) announced "one-click llama.cpp runtime".</li>
+<li>Apple skills: iMessage through <code>imsg</code>, Reminders through <code>remindctl</code>, Notes, Find My. All macOS only. iMessage is also available as a gateway channel through BlueBubbles (self-hosted Mac server) or Photon (a managed service, so not offline).</li>
+<li>Email: an IMAP/SMTP gateway adapter and a Himalaya-based mailbox skill. The docs tell you to use a dedicated account for the agent rather than your personal mailbox.</li>
+<li>Unattended work: cron with per-job model and reasoning pins, a no-agent script mode, and webhook triggers; <code>/goal</code> for single-session iterate-until-done with a judge model; a kanban board that dispatches cards to worker processes; <code>/heartbeat</code> for recurring prompts inside a session.</li>
+<li>Security: eight documented layers, including command approval modes (<code>smart</code>, <code>manual</code>, <code>off</code>), a separate <code>cron_mode: deny</code> default for scheduled jobs that hit a dangerous command, write denylists, Docker and other container backends, and MCP credential filtering. These are application-level controls.</li>
+<li>v0.23.0 (2026-11-05) made one gateway per machine own every session, with CLI, TUI, desktop, editors, bots and cron as clients, and added a browser webapp served from your own gateway. That is the architecture a LAN setup needs.</li>
+<li>Scale and churn: v0.23.0 reports about 10,080 commits and 1,950 merged PRs since v0.22.0, three weeks earlier. This is a fast-moving codebase. Pin a stable release.</li>
+</ul>
+<p><strong>OpenClaw.</strong> From its README and docs <a class="cite" href="sources.html#src-6" aria-label="Source 6">[6]</a><a class="cite" href="sources.html#src-7" aria-label="Source 7">[7]</a><a class="cite" href="sources.html#src-8" aria-label="Source 8">[8]</a>: gateway on the host, a macOS app that prompts for screen, microphone, speech, automation and accessibility permissions and shows exec approval prompts, voice wake and push-to-talk on the Mac, an iMessage channel, a plugin hub. Sandboxing "is off by default" and the docs say "This is not a perfect security boundary". The local model docs are frank: "A model that loads or answers a short prompt may still fail an agent turn" and "Local models do not provide hosted providers' safety filters". Whether macOS speech recognition is on-device was not stated on the page I read.</p>
+<p><strong>OpenJarvis.</strong> New in 2026 and worth knowing about. It is the only candidate designed around local models as the default. Its paper reports that swapping Claude Opus 4.6 for Qwen3.5-9B in a personal agent stack drops accuracy by 25 to 39 points on tasks such as PinchBench and GAIA, and that its search over prompts, tools and settings brings on-device configurations to within 3.2 points of the best cloud baseline on average, matching or beating cloud on 4 of 8 benchmarks <a class="cite" href="sources.html#src-14" aria-label="Source 14">[14]</a>. These are the authors' own results. Its README cites earlier research claiming local models handle 88.7% of single-turn chat and reasoning queries <a class="cite" href="sources.html#src-19" aria-label="Source 19">[19]</a>. It is younger and smaller than Hermes Agent and OpenClaw, and its personal-data connectors in the README are Google accounts, not Apple apps.</p>
+<p><strong>Home Assistant Assist.</strong> The most mature open voice pipeline (wake word, STT, intent, LLM, TTS over the Wyoming protocol), but it is an appliance for home control, not a desktop or personal-data assistant. Its value here is as a source of voice satellites and as a tool the agent can call. Hermes Agent has a Home Assistant toolset and messaging adapter <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>. The Wyoming satellite repo was archived in January 2026 in favour of an ESPHome-protocol Linux voice assistant <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<p><strong>Coding agents</strong> (opencode, Codex CLI, Claude Code, pi, Qwen Code, Cline, OpenHands, Goose): these are the right tools for the long-horizon class of work. None is an assistant. They do not do voice, personal data or messaging.</p>
+<p><strong>Chat front ends</strong> (Open WebUI, AnythingLLM, Jan, LM Studio, Msty, Onyx, Khoj, LocalAI): useful as a chat window or model runner. None combines voice, app integrations with permissions and scheduled agent work. Feature-by-feature checks of these were not done today; the classification rests on their repo descriptions and my prior knowledge.</p>
+<p><strong>Apple's own stack in macOS 27.</strong> Verified from Apple's WWDC26 macOS guide <a class="cite" href="sources.html#src-20" aria-label="Source 20">[20]</a>: the Foundation Models framework "can now work with any language model, including Apple Foundation Models, cloud models like Claude and Gemini, or any other provider that conforms to the Language Model protocol". Apple's <code>mlx-swift-lm</code> repo ships an <code>MLXLanguageModel</code> that plugs MLX models into the same session API with tool calling and guided generation <a class="cite" href="sources.html#src-21" aria-label="Source 21">[21]</a> (secondary summary; repo exists, 875 stars, pushed 2026-11-17). Siri now reaches third-party apps through App Intents entity and intent schemas, and SiriKit is reported as deprecated (secondary) <a class="cite" href="sources.html#src-22" aria-label="Source 22">[22]</a>. Apple said the framework core would be open sourced and usable on Linux servers; I could not confirm that this has shipped. <code>apple/foundation-models-utilities</code> exists under Apache-2.0 <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>. Reports of a Siri "Extensions" system and a model delegation API come from beta code analysis, not from Apple documentation <a class="cite" href="sources.html#src-23" aria-label="Source 23">[23]</a>.</p>
+<p>What this means: Apple now offers the cleanest permission model (App Intents, per-app consent) and a supported way to run your own MLX model behind a system API. It is not open source end to end, it does not exist on Linux, and it does not give a third-party agent access to Mail or Messages content. A native Swift client that speaks App Intents on one side and an OpenAI-compatible endpoint on the other is a plausible component of a new project, and nobody appears to have built it as an open project yet. That absence is my reading of the search results, not a proven negative.</p>
+<p><strong>MCP servers for Apple apps.</strong> Several exist: JonathanRReed/Apple-MCPs (Mail, Calendar, Reminders, Messages, Contacts, Notes, Shortcuts, Files, Maps; MIT; 34 stars), griches/apple-mcp (131 stars, no license file, last push 2026-03), gabythiesse/apple-mcp-swift, aheusingfeld/AppleMCP (read-only), AndreLYL/Apple2Agent (requires approval on the Mac before outgoing mail is sent) <a class="cite" href="sources.html#src-24" aria-label="Source 24">[24]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>. Three of those five have zero stars. This layer is immature. The better-maintained building blocks are the single-purpose CLIs: <code>imsg</code> (1,414 stars, v0.21.1 on 2026-11-16) and <code>remindctl</code> (426 stars) <a class="cite" href="sources.html#src-25" aria-label="Source 25">[25]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<p><strong>Linux equivalents.</strong> Deskbrid (a desktop control daemon with MCP for GNOME, KDE, Hyprland, X11), GNOME Desktop MCP, kwin-mcp, a generic <code>mcp_dbus</code> bridge, and Newelle (a GNOME assistant with MCP support) exist. A third-party review of <code>mcp_dbus</code> notes that its permission model is unclear and that a malicious prompt could trigger destructive D-Bus calls <a class="cite" href="sources.html#src-11" aria-label="Source 11">[11]</a>. I found nothing that gives an agent scoped access to Evolution or KDE PIM calendars, or anything using xdg-desktop-portal as an agent permission broker. cua's Linux backend uses AT-SPI over D-Bus for the accessibility tree <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-11" aria-label="Source 11">[11]</a>.</p>
+<h2 id="verdict">Verdict</h2>
+<p>No single project. Hermes Agent is the best base because it already covers most layers on both operating systems, is MIT licensed, and has the gateway architecture a LAN deployment needs. OpenClaw is the alternative if a native Mac app that brokers permissions matters more than Linux parity. The missing pieces are listed on <a href="gaps.html">the roadmap page</a>.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="index.html"><span>Previous</span>Overview</a>
+    <a href="models.html"><span>Next</span>Models</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

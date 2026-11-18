@@ -1,0 +1,208 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Voice: speech to text, text to speech, wake word | Local Assistant Stack</title>
+  <meta name="description" content="Local speech to text, text to speech and wake word options for Apple Silicon and Linux, with published numbers and an estimated latency budget for one voice turn.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html" aria-current="page">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Research date 2026-11-18</p>
+    <h1>Voice</h1>
+    <p class="lede">Speech to text, text to speech, wake word, and a realistic latency budget for one voice turn on an M4 mini. The end-to-end budget is an estimate, not a measurement.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#speech-to-text">Speech to text</a></li>
+      <li><a href="#text-to-speech">Text to speech</a></li>
+      <li><a href="#wake-word">Wake word</a></li>
+      <li><a href="#realistic-latency-for-one-voice-turn">Realistic latency for one voice turn</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="speech-to-text">Speech to text</h2>
+<div class="table-wrap" role="region" aria-label="Speech to text table" tabindex="0">
+<table class="c4">
+<thead><tr>
+<th scope="col">Model</th>
+<th scope="col">Where it runs</th>
+<th scope="col">Numbers</th>
+<th scope="col">Notes</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Parakeet TDT 0.6B v3</th>
+<td>Core ML through FluidAudio (Apache-2.0, v0.18.3, 2026-11-07), MLX through mlx-audio, GGUF builds, ONNX on Linux</td>
+<td>On a MacBook Air M4 16 GB: 0.10 s average latency, real-time factor 0.014, WER 2.50% on a 50-utterance LibriSpeech sample <a class="cite" href="sources.html#src-42" aria-label="Source 42">[42]</a></td>
+<td>25 European languages. The best default on Apple Silicon. FluidAudio runs it on the Neural Engine. omarchy-mlx runs Parakeet on the ANE under Linux on M1 and M2.</td>
+</tr>
+<tr>
+<th scope="row">Whisper large-v3-turbo</th>
+<td>WhisperKit (argmax-oss-swift, MIT), mlx-audio, whisper.cpp, Faster-Whisper</td>
+<td>Same test: 0.68 s, RTF 0.095, WER 2.89% <a class="cite" href="sources.html#src-42" aria-label="Source 42">[42]</a></td>
+<td>99+ languages and translation. The author notes the accuracy difference is within noise. Hermes Agent's built-in local STT is Faster-Whisper <a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a>.</td>
+</tr>
+<tr>
+<th scope="row">Moonshine streaming (tiny, small, medium)</th>
+<td>CPU, cross-platform; MIT for English and streaming models</td>
+<td>Latency numbers not captured today</td>
+<td>Does work while the user is still talking. Good for Linux boxes without a GPU <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a><a class="cite" href="sources.html#src-43" aria-label="Source 43">[43]</a>.</td>
+</tr>
+<tr>
+<th scope="row">Voxtral Mini 4B Realtime</th>
+<td>llama.cpp-family audio runtimes, mlx</td>
+<td>Emits words and a turn signal every 80 ms in Speakrail's pipeline <a class="cite" href="sources.html#src-44" aria-label="Source 44">[44]</a></td>
+<td>Streaming, heavier (4B).</td>
+</tr>
+<tr>
+<th scope="row">Nemotron 3.5 ASR streaming 0.6B, Canary, Qwen3-ASR, Granite Speech 5.0</th>
+<td>various</td>
+<td>not benchmarked today</td>
+<td>Exist on Hugging Face with GGUF or MLX builds <a class="cite" href="sources.html#src-15" aria-label="Source 15">[15]</a>.</td>
+</tr>
+</tbody></table></div>
+<p>I found no Whisper large-v4 <a class="cite" href="sources.html#src-15" aria-label="Source 15">[15]</a>.</p>
+<h2 id="text-to-speech">Text to speech</h2>
+<div class="table-wrap" role="region" aria-label="Text to speech table" tabindex="0">
+<table class="c4">
+<thead><tr>
+<th scope="col">Model</th>
+<th scope="col">License</th>
+<th scope="col">Numbers</th>
+<th scope="col">Notes</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">Kokoro-82M</th>
+<td>Apache-2.0</td>
+<td>One M5 Max test reports RTF about 0.08 and first audio around 90 ms (secondary, unverified) <a class="cite" href="sources.html#src-45" aria-label="Source 45">[45]</a></td>
+<td>Small, fast, good quality, no voice cloning. Available through FluidAudio (Core ML), mlx-audio, ONNX, and Kokoro-FastAPI (OpenAI-compatible; Hermes documents using it) <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>. The original repo has had no push since 2025-08.</td>
+</tr>
+<tr>
+<th scope="row">Pocket TTS (Kyutai)</th>
+<td>MIT</td>
+<td>"~200ms to get the first audio chunk", about 6x real time on a MacBook Air M4 using two CPU cores <a class="cite" href="sources.html#src-46" aria-label="Source 46">[46]</a></td>
+<td>CPU only, streaming, voice cloning. Works the same on Linux. FluidAudio also runs it on the ANE.</td>
+</tr>
+<tr>
+<th scope="row">Piper</th>
+<td>GPL-3.0 (OHF-Voice/piper1-gpl, v1.8.0, 2026-09-04)</td>
+<td>not measured today</td>
+<td>Very light, many languages, robotic compared with Kokoro. Built into Hermes Agent and Home Assistant <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>. Note the licence change from the old MIT repo.</td>
+</tr>
+<tr>
+<th scope="row">Qwen3-TTS 0.6B and 1.7B</th>
+<td>see model card</td>
+<td>not measured today</td>
+<td>Voice design and custom voices; MLX builds; Hermes docs mention it through oMLX <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a><a class="cite" href="sources.html#src-15" aria-label="Source 15">[15]</a>.</td>
+</tr>
+<tr>
+<th scope="row">CSM 1B (Sesame), Chatterbox, Dia, Voxtral TTS 4B</th>
+<td>various</td>
+<td>not measured today</td>
+<td>More expressive, heavier, slower. In mlx-audio <a class="cite" href="sources.html#src-47" aria-label="Source 47">[47]</a>.</td>
+</tr>
+<tr>
+<th scope="row">NeuTTS, KittenTTS</th>
+<td>see projects</td>
+<td>not measured today</td>
+<td>Local options built into Hermes Agent <a class="cite" href="sources.html#src-3" aria-label="Source 3">[3]</a>.</td>
+</tr>
+</tbody></table></div>
+<p>mlx-audio (MIT, v0.6.6, 2026-11-16, 8,298 stars) is the one package that covers most of these on Apple Silicon with an OpenAI-compatible server <a class="cite" href="sources.html#src-47" aria-label="Source 47">[47]</a><a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>.</p>
+<h2 id="wake-word">Wake word</h2>
+<ul>
+<li>openWakeWord (Apache-2.0): the common open choice, CPU only. Hermes Agent bundles a trained "hey hermes" model for it; omarchy-mlx uses it for "hey_jarvis" <a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a>. The upstream repo's last push was 2025-12-30 <a class="cite" href="sources.html#src-17" aria-label="Source 17">[17]</a>, so it is stable but not actively developed.</li>
+<li>sherpa: open-vocabulary, typed phrases, no training. Hermes's fallback engine <a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a>.</li>
+<li>Porcupine (Picovoice): proprietary, free tier, needs an access key <a class="cite" href="sources.html#src-4" aria-label="Source 4">[4]</a>.</li>
+<li>Home Assistant's microWakeWord runs on ESP32 satellites. Not researched further today.</li>
+</ul>
+<h2 id="realistic-latency-for-one-voice-turn">Realistic latency for one voice turn</h2>
+<p>Measured end to end:</p>
+<ul>
+<li>Speakrail (full duplex, Voxtral Realtime plus a Gemma 4 LoRA plus Pocket TTS or Breeze TTS) reports a median of 0.54 to 0.74 s from the user's last word to audio, on an RTX 4090, from 12 and 66 replies <a class="cite" href="sources.html#src-44" aria-label="Source 44">[44]</a>. It has a Mac configuration (<code>mac-e4b</code>, Apple Silicon 16 GB and up) but publishes no Mac latency in the README.</li>
+</ul>
+<p>Budget for a cascaded pipeline on an M4 mini, assembled from the component numbers above. This is my estimate, not a measurement:</p>
+<div class="table-wrap" role="region" aria-label="Realistic latency for one voice turn table" tabindex="0">
+<table class="c3">
+<thead><tr>
+<th scope="col">Stage</th>
+<th scope="col">Time</th>
+<th scope="col">Basis</th>
+</tr></thead>
+<tbody>
+<tr>
+<th scope="row">End-of-speech detection</th>
+<td>0.2 to 0.6 s</td>
+<td>Silence threshold; the largest tunable. Streaming turn detection (Speakrail, Moonshine) removes most of it.</td>
+</tr>
+<tr>
+<th scope="row">STT</th>
+<td>0.1 to 0.2 s</td>
+<td>Parakeet on Core ML <a class="cite" href="sources.html#src-42" aria-label="Source 42">[42]</a></td>
+</tr>
+<tr>
+<th scope="row">LLM time to first token, small model, cached prompt</th>
+<td>0.2 to 0.5 s</td>
+<td>SiliconBench TTFT p50 of 179 to 385 ms for Gemma 4 E4B on an M5 Pro <a class="cite" href="sources.html#src-12" aria-label="Source 12">[12]</a>; an M4 will be slower</td>
+</tr>
+<tr>
+<th scope="row">First sentence generated</th>
+<td>0.3 to 1.0 s</td>
+<td>15 to 20 tokens at 20 to 50 tok/s</td>
+</tr>
+<tr>
+<th scope="row">TTS first audio</th>
+<td>0.1 to 0.2 s</td>
+<td>Pocket TTS, Kokoro <a class="cite" href="sources.html#src-46" aria-label="Source 46">[46]</a><a class="cite" href="sources.html#src-45" aria-label="Source 45">[45]</a></td>
+</tr>
+<tr>
+<th scope="row"><strong>Total to first audio</strong></th>
+<td><strong>about 1 to 2.5 s</strong></td>
+<td>A secondary source's own estimate for a similar stack is 1.5 to 2.5 s <a class="cite" href="sources.html#src-48" aria-label="Source 48">[48]</a></td>
+</tr>
+</tbody></table></div>
+<p>What breaks this budget: a tool call adds a full extra model turn; an uncached prompt adds seconds; a 27B dense model at 10 to 13 tok/s adds one to two seconds to the first sentence; a model that was unloaded for idleness adds a cold load. For a Siri-like feel, voice turns should go to a small pinned model, with hand-off to the large model or a hosted one announced out loud.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="runtimes.html"><span>Previous</span>Runtimes</a>
+    <a href="permissions.html"><span>Next</span>Permissions</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap. No software exists in this project yet.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>
