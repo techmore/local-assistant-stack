@@ -1,0 +1,13 @@
+{
+  "note": "Gate + date-tolerant tools with the repackaged compact prompt (profiles/pocket-assistant/SOUL.md: 6 rules, 6 examples written for the new tool behaviour).",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules2",
+    "fewshot2"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "gate": true,
+  "nl_dates": true
+}

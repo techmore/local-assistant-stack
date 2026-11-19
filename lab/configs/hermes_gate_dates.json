@@ -1,0 +1,26 @@
+{
+  "note": "hermes_prev_best + confirmation gate + date/time-tolerant tools.",
+  "level": "hermes",
+  "thinking": false,
+  "tools_variant": "explicit_strict",
+  "hermes_args": [
+    "-t",
+    "lab"
+  ],
+  "hermes_config": {
+    "tools": {
+      "tool_search": {
+        "enabled": "off"
+      }
+    },
+    "agent": {
+      "tool_use_enforcement": false
+    }
+  },
+  "hermes_prompt": [
+    "rules",
+    "fewshot"
+  ],
+  "gate": true,
+  "nl_dates": true
+}

@@ -1,0 +1,12 @@
+[
+  {"name": "Lena Fischer", "phone": "555-0111", "email": "lena.fischer@example.org"},
+  {"name": "Lena Okoye", "phone": "555-0118", "email": "lena.okoye@example.net"},
+  {"name": "Tobias Marsh", "phone": "555-0126", "email": "tobias.marsh@example.com"},
+  {"name": "Dad", "phone": "555-0103", "email": "walt.h@example.org"},
+  {"name": "Ines Carvalho", "phone": "555-0134", "email": "ines.carvalho@example.com"},
+  {"name": "Rahul Mehta", "phone": "555-0149", "email": "rahul.mehta@example.net"},
+  {"name": "Chris Yoon", "phone": "555-0152", "email": "chris.yoon@example.org"},
+  {"name": "Chris Abara", "phone": "555-0161", "email": "chris.abara@example.com"},
+  {"name": "Greta Lindholm", "phone": "555-0170", "email": "greta.lindholm@example.org"},
+  {"name": "Dr. Soto's Office", "phone": "555-0185", "email": "frontdesk@sotodental.example"}
+]

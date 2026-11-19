@@ -1,0 +1,23 @@
+{
+  "note": "Gate + date-tolerant tools with the packaged persona installed as SOUL.md (profiles/pocket-assistant), no agent.system_prompt.",
+  "level": "hermes",
+  "thinking": false,
+  "tools_variant": "explicit_strict",
+  "hermes_args": [
+    "-t",
+    "lab"
+  ],
+  "hermes_config": {
+    "tools": {
+      "tool_search": {
+        "enabled": "off"
+      }
+    },
+    "agent": {
+      "tool_use_enforcement": false
+    }
+  },
+  "gate": true,
+  "nl_dates": true,
+  "hermes_soul": "profiles/pocket-assistant/SOUL.md"
+}

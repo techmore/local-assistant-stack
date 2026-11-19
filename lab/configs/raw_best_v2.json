@@ -1,0 +1,13 @@
+{
+  "note": "raw_best plus two fixes aimed at its residual failures: a date lookup table in the system prompt and a guard that tells the model to stop retrying a call that failed twice.",
+  "thinking": false,
+  "system": [
+    "base",
+    "dates",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "loop_guard": true
+}

@@ -275,3 +275,7 @@ table.c6 tbody th, table.c7 tbody th, table.c11 tbody th { min-width: 9rem; }
   .table-wrap, .diagram-scroll { overflow: visible; }
   table { min-width: 0 !important; }
 }
+
+/* code blocks (lab page) */
+pre { overflow-x: auto; padding: 0.9rem 1rem; border: 1px solid var(--border, currentColor); border-radius: 8px; font-size: 0.85rem; line-height: 1.5; }
+pre code { background: none; padding: 0; border: 0; font-size: inherit; }

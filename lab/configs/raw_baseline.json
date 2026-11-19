@@ -1,0 +1,4 @@
+{
+  "name": "raw_baseline",
+  "note": "Out of the box: thinking at the template default (on), llama-server default sampling, all 14 tools, plain descriptions, minimal system prompt, Q4_K_M."
+}

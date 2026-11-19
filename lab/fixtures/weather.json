@@ -1,0 +1,6 @@
+{
+  "portland|2026-11-21": {"condition": "rain", "high_f": 48, "low_f": 41},
+  "seattle|2026-11-21": {"condition": "rain", "high_f": 46, "low_f": 40},
+  "phoenix|2026-11-21": {"condition": "sunny", "high_f": 78, "low_f": 55},
+  "denver|2026-11-19": {"condition": "snow", "high_f": 28, "low_f": 15}
+}

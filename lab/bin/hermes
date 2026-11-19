@@ -1,0 +1,14 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# Lab-isolated Hermes: HERMES_HOME inside the lab, PM-composed environment, and an OS sandbox.
+# The sandbox is chosen by harness/platforms (macOS: sandbox-exec; Linux: bubblewrap, untested).
+# If no sandbox is available this exits 78 and Hermes is NOT started.
+# LAB_SANDBOX=eval selects the tight evaluation profile (used for every evaluation run).
+LAB="$(cd "$(dirname "$0")/.." && pwd)"
+source "$LAB/hermes-env.sh"
+BOOT="$(ls "$LAB"/hermes-home/tools/python-*/bin/python3 | head -1)"
+cd "$LAB/hermes-agent" || exit 1
+eval "$(PYTHONHOME= PYTHONPATH="$PWD" "$BOOT" -m pm.environments --format sh | grep -E '^export (PATH|PYTHON|VIRTUAL_ENV|HERMES[A-Z_]*|__HERMES[A-Z_]*|UV[A-Z_]*|PLAYWRIGHT[A-Z_]*|NODE[A-Z_]*)=')"
+MODE=guard; [ "${LAB_SANDBOX:-}" = eval ] && MODE=eval
+[ -n "${LAB_CWD:-}" ] && cd "$LAB_CWD"
+exec "$LAB/.venv/bin/python" "$LAB/harness/sandbox_exec.py" --mode "$MODE" -- "${PYTHON:-python}" "$LAB/hermes-agent/hermes" "$@"

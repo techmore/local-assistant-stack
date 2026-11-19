@@ -1,0 +1,14 @@
+{
+  "Mom": [
+    {"from": "Mom", "time": "2026-11-17 18:02", "text": "Did you get the photos I sent?"},
+    {"from": "me", "time": "2026-11-17 18:20", "text": "Yes, they're lovely!"},
+    {"from": "Mom", "time": "2026-11-18 08:45", "text": "Sunday dinner at 6pm at our place. Can you bring dessert?"}
+  ],
+  "Jo Tanaka": [
+    {"from": "me", "time": "2026-11-16 12:10", "text": "Great hike last weekend."},
+    {"from": "Jo Tanaka", "time": "2026-11-18 09:05", "text": "Kayaking at Lake Sorrel this Saturday morning. You in?"}
+  ],
+  "Dana Whitfield": [
+    {"from": "Dana Whitfield", "time": "2026-11-18 09:40", "text": "See you at the cafe at 3 today."}
+  ]
+}

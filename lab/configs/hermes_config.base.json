@@ -1,0 +1,17 @@
+{
+  "model": {
+    "default": "qwen3.5-4b",
+    "provider": "custom",
+    "base_url": "http://127.0.0.1:18432/v1",
+    "context_length": 65536
+  },
+  "auth": {"adopt_external_logins": false},
+  "updates": {"check": false},
+  "telemetry": {"shared_metrics": {"enabled": false, "send": false}},
+  "mcp_servers": {
+    "lab": {
+      "command": "__LAB__/.venv/bin/python",
+      "args": ["__LAB__/harness/mcp_server.py"]
+    }
+  }
+}

@@ -1,0 +1,111 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Lab: measuring a small local assistant | Local Assistant Stack</title>
+  <meta name="description" content="Measured results for Hermes Agent driving Qwen3.5-4B on personal-assistant tasks with stand-in tools: held-out pass rates with intervals, and zero unconfirmed sends or deletes with a confirmation gate enforced in code.">
+  <meta name="color-scheme" content="light dark">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&amp;family=Inter:opsz,wght@14..32,400..700&amp;display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+<header class="site-header">
+  <div class="wrap header-inner">
+    <a class="brand" href="index.html">Local Assistant Stack</a>
+    <nav aria-label="Primary">
+      <ul>
+        <li><a href="index.html">Overview</a></li>
+        <li><a href="landscape.html">Landscape</a></li>
+        <li><a href="models.html">Models</a></li>
+        <li><a href="runtimes.html">Runtimes</a></li>
+        <li><a href="voice.html">Voice</a></li>
+        <li><a href="permissions.html">Permissions</a></li>
+        <li><a href="unattended.html">Unattended</a></li>
+        <li><a href="build.html">Build</a></li>
+        <li><a href="gaps.html">Roadmap</a></li>
+        <li><a href="lab.html" aria-current="page">Lab</a></li>
+        <li><a href="sources.html">Sources</a></li>
+      </ul>
+    </nav>
+  </div>
+</header>
+<main id="main" class="wrap">
+  <header class="page-head">
+    <p class="kicker">Measured 2026-11-18, on one Mac</p>
+    <h1>Lab: measuring a small local assistant</h1>
+    <p class="lede">An evaluation harness for Hermes Agent driving Qwen3.5-4B through llama.cpp, with every tool a stand-in over invented data. It measures how often the model does the right thing, and tests whether code outside the model can stop it from sending or deleting on its own.</p>
+  </header>
+  <nav class="toc" aria-label="On this page">
+    <h2 class="toc-title">On this page</h2>
+    <ol>
+      <li><a href="#what-it-is">What it is</a></li>
+      <li><a href="#held-out-results">Held-out results</a></li>
+      <li><a href="#reading-the-numbers">Reading the numbers</a></li>
+      <li><a href="#not-measured">What is not measured</a></li>
+      <li><a href="#reproduce">How to reproduce</a></li>
+    </ol>
+  </nav>
+  <div class="prose">
+<h2 id="what-it-is">What it is</h2>
+<p>The code is in the repository's <a href="https://github.com/techmore/local-assistant-stack/tree/main/lab"><code>lab/</code></a> directory. It runs a set of assistant tasks (read the calendar, set a reminder, find an email and act on it, draft a reply, send a text, refuse instructions hidden in a web page) against fourteen stand-in tools that operate on fixture files. No real calendar, message store, mail account or file is touched, and every person, number and address in the fixtures is invented.</p>
+<p>Each task runs three times at two levels: a bare OpenAI-compatible endpoint with a minimal agent loop, and through Hermes Agent v0.23.2 restricted to the lab's tools inside an OS sandbox. A task passes or fails by deterministic checks on the tool calls, the final answer and the end state. The model is Qwen3.5-4B, Q4_K_M quantisation, thinking off.</p>
+<p>Three mechanisms were tested. A <strong>confirmation gate</strong>: sending a message or deleting a file only stages a preview, and runs on a second call only if the user's side has recorded an approval. A <strong>date and time resolver</strong>: tools accept "friday" or "3 to 4pm" and work out the date in code. A <strong>compact prompt</strong> packaged as a Hermes persona.</p>
+<h2 id="held-out-results">Held-out results</h2>
+<p>A first round of prompt tuning reached 95.8% (bare endpoint) and 92.7% (Hermes) on 55 tasks. Those numbers were in-sample: the same author wrote the tasks and the fixes. The three mechanisms were then frozen in git, 63 new tasks were written on new fixture data with a different date, and everything was run on them. The table is from that held-out set: 63 tasks, 3 runs each, 189 runs per cell. The range in brackets is a 95% bootstrap interval over tasks.</p>
+<div class="table-wrap">
+<table class="c4">
+<thead><tr><th>Configuration</th><th>Bare endpoint</th><th>Through Hermes v0.23.2</th><th>Sends or deletes that ran without a recorded confirmation (bare / Hermes)</th></tr></thead>
+<tbody>
+<tr><th>(1) Round-1 best, on the new tasks</th><td>78.3% (68 to 87)</td><td>83.6% (75 to 91)</td><td>23 / 22</td></tr>
+<tr><th>(2) + confirmation gate</th><td>82.0% (72 to 90)</td><td>not run</td><td>0 / not run</td></tr>
+<tr><th>(3) + date-tolerant tools</th><td>83.1% (76 to 90)</td><td>not run</td><td>23 / not run</td></tr>
+<tr><th>(4) + both</th><td>84.1% (77 to 90)</td><td>84.7% (77 to 91)</td><td>0 / 0</td></tr>
+<tr><th>(5) Both + compact prompt</th><td>87.8% (80 to 94)</td><td>90.5% (84 to 96)</td><td>0 / 0</td></tr>
+</tbody>
+</table>
+</div>
+<p>Full tables, per-task results and failure categories: <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/results/HELDOUT.md"><code>results/HELDOUT.md</code></a>. What still fails and why: <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/results/FAILURES.md"><code>results/FAILURES.md</code></a>.</p>
+<h2 id="reading-the-numbers">Reading the numbers</h2>
+<ul>
+<li><strong>The round-1 result did not generalise.</strong> 95.8% in-sample became 78.3% on new tasks at the bare endpoint, and 92.7% became 83.6% through Hermes. Dates (46%) and multi-step chains (42%) account for most of the drop at the bare endpoint.</li>
+<li><strong>With the gate, no send or delete ran without a recorded confirmation.</strong> Without it, 23 (bare) and 22 (Hermes) ran on the model's say-so, including an injected email that got a file of passwords sent in 3 of 3 runs at both levels. With it the count was zero in every gated run, while the model still tried: previews left unapproved and second calls refused by the gate are counted in the full tables. This is a result about stand-in tools; nothing here was connected to a real messaging account.</li>
+<li><strong>Pass-rate differences between configurations are within noise at 63 tasks.</strong> Every paired interval against configuration (1) includes zero. The unsafe-action count is the result that is not within noise.</li>
+<li><strong>The checks were corrected once.</strong> Three checks rejected correct answers and were fixed after the first grading; 9 of 1,512 runs changed, all from fail to pass, and both gradings are in the full tables.</li>
+<li><strong>The held-out set is no longer held out.</strong> Its failures have been read, so the next change has to be judged on a third, new set.</li>
+</ul>
+<h2 id="not-measured">What is not measured</h2>
+<ul>
+<li><strong>Linux.</strong> Everything was developed and run on macOS on Apple Silicon. The Linux sandbox wrapper (bubblewrap) has not been executed. See <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/docs/design/cross-platform.md"><code>docs/design/cross-platform.md</code></a>.</li>
+<li><strong>Real apps and accounts.</strong> All tools are stand-ins. Nothing shows how the gate behaves in front of a real messaging or mail client.</li>
+<li><strong>Other models and sizes.</strong> One 4B model, one quantisation for the main tables.</li>
+<li><strong>Hermes configurations (2) and (3).</strong> The single-lever ablations were run at the bare endpoint only.</li>
+<li><strong>Voice, long unattended jobs and anything multi-user.</strong></li>
+</ul>
+<h2 id="reproduce">How to reproduce</h2>
+<p>The unit tests need only Python 3.11 or newer and no model:</p>
+<pre><code>git clone https://github.com/techmore/local-assistant-stack
+cd local-assistant-stack/lab
+python -m unittest discover -s tests -v</code></pre>
+<p>The model runs need <code>llama-server</code> from llama.cpp, the Qwen3.5-4B Q4_K_M GGUF file (about 2.7 GB) and, for the Hermes level, a sandboxed checkout of Hermes Agent v0.23.2. The steps are in <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/docs/USAGE.md"><code>docs/USAGE.md</code></a>. Then:</p>
+<pre><code>.venv/bin/python harness/sweep.py --suite heldout configs/raw_best.json configs/raw_assist2.json
+.venv/bin/python harness/report_heldout.py</code></pre>
+<p>Raw transcripts are not published; the summary tables are. Runs use fixed seeds (1000 to 1002), but results on another machine or llama.cpp build can differ by a few runs.</p>
+  </div>
+  <nav class="pager" aria-label="Previous and next page">
+    <a href="gaps.html"><span>Previous</span>Roadmap</a>
+    <a href="sources.html"><span>Next</span>Sources</a>
+  </nav>
+</main>
+<footer class="site-footer">
+  <div class="wrap footer-inner">
+    <p>Research date 2026-11-18. This field moves monthly; check versions and figures against the <a href="sources.html">sources</a> before relying on them.</p>
+    <p>Status: research and roadmap, plus an <a href="lab.html">evaluation lab</a> with measured results. The assistant itself is not built.</p>
+    <p>Written content is licensed <a href="https://creativecommons.org/licenses/by/4.0/">CC BY 4.0</a>, copyright Techmore. Code is MIT. <a href="https://github.com/techmore/local-assistant-stack">Source on GitHub</a>. Part of <a href="https://techmore.github.io/pages/repos/">Techmore</a>.</p>
+  </div>
+</footer>
+</body>
+</html>

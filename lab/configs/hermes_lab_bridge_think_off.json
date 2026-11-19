@@ -1,0 +1,9 @@
+{
+  "level": "hermes",
+  "note": "Hermes v0.23.2 defaults restricted to the lab's 14 MCP tools (-t lab): Hermes' tool_search bridge hides them behind 3 bridge tools. Thinking off (Hermes itself would request thinking).",
+  "hermes_args": [
+    "-t",
+    "lab"
+  ],
+  "thinking": false
+}

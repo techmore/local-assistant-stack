@@ -1,0 +1,8 @@
+[
+  {"id": "ev1", "title": "Team sync", "date": "2026-11-18", "start_time": "10:00", "end_time": "10:30"},
+  {"id": "ev2", "title": "1:1 with Rosa", "date": "2026-11-19", "start_time": "11:00", "end_time": "11:30"},
+  {"id": "ev3", "title": "Dentist - Dr. Okafor", "date": "2026-11-20", "start_time": "14:00", "end_time": "15:00"},
+  {"id": "ev4", "title": "Team retro", "date": "2026-11-20", "start_time": "16:00", "end_time": "17:00"},
+  {"id": "ev5", "title": "Car service", "date": "2026-11-23", "start_time": "08:30", "end_time": "09:30"},
+  {"id": "ev6", "title": "Thanksgiving dinner", "date": "2026-11-26", "start_time": "17:00", "end_time": "20:00"}
+]

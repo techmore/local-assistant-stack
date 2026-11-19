@@ -1,0 +1,7 @@
+{
+  "level": "hermes",
+  "note": "As hermes_lab_eager with thinking disabled (enable_thinking=false injected by the proxy).",
+  "thinking": false,
+  "hermes_args": ["-t", "lab"],
+  "hermes_config": {"tools": {"tool_search": {"enabled": "off"}}}
+}

@@ -1,0 +1,6 @@
+#!/bin/bash
+# SPDX-License-Identifier: MIT
+# Run a command with the isolated Hermes environment inside the "guard" sandbox (fails closed).
+LAB="$(cd "$(dirname "$0")/.." && pwd)"
+source "$LAB/hermes-env.sh"
+exec "$LAB/.venv/bin/python" "$LAB/harness/sandbox_exec.py" --mode guard -- "$@"

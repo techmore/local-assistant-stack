@@ -1,0 +1,14 @@
+{
+  "note": "raw_best on the Q8_0 quantization.",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "server": {
+    "quant": "q8"
+  }
+}

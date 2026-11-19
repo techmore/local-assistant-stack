@@ -1,0 +1,12 @@
+{
+  "note": "raw_best plus the per-task skill toolset (assumes a perfect skill router).",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "toolset": "narrow"
+}

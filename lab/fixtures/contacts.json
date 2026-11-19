@@ -1,0 +1,10 @@
+[
+  {"name": "Dana Whitfield", "phone": "555-0142", "email": "dana.whitfield@example.com"},
+  {"name": "Marcus Bell", "phone": "555-0167", "email": "marcus.bell@example.com"},
+  {"name": "Mom", "phone": "555-0101", "email": "carol.m@example.com"},
+  {"name": "Jo Tanaka", "phone": "555-0188", "email": "jo.tanaka@example.com"},
+  {"name": "Priya Nair", "phone": "555-0123", "email": "priya.nair@example.com"},
+  {"name": "Alex Chen", "phone": "555-0155", "email": "alex.chen@example.com"},
+  {"name": "Alex Rivera", "phone": "555-0177", "email": "alex.rivera@example.com"},
+  {"name": "Pat Greer", "phone": "555-0110", "email": "pat.greer@example.com"}
+]

@@ -1,0 +1,4 @@
+Home network
+SSID: Maple-5G
+Wifi password: tangerine-otter-42
+Router admin page: http://router.lab.example
