@@ -1,0 +1,125 @@
+# Runs the Linux platform module and the bubblewrap wrapper for real (lab/tests/test_linux_sandbox.py):
+# both sandbox modes, fail-closed behaviour, loopback networking, the MCP tool server inside the
+# sandbox, and the bash helpers. No model, no Hermes. What this covers and what it does not is
+# written down in lab/docs/design/cross-platform.md.
+name: linux-sandbox
+on:
+  push:
+    branches: [main]
+    paths: ["lab/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["lab/**", ".github/workflows/**"]
+permissions:
+  contents: read
+jobs:
+  sandbox:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, ubuntu-22.04, ubuntu-24.04-arm]
+        python-version: ["3.11", "3.14"]
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    defaults:
+      run:
+        shell: bash
+        working-directory: lab
+    env:
+      LC_ALL: C
+      TZ: UTC
+      USERNS_SYSCTL: kernel.apparmor_restrict_unprivileged_userns
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+
+      - name: Install bubblewrap, shellcheck, lsof (if missing)
+        run: |
+          missing=""
+          command -v bwrap >/dev/null || missing="$missing bubblewrap"
+          command -v shellcheck >/dev/null || missing="$missing shellcheck"
+          command -v lsof >/dev/null || missing="$missing lsof"
+          echo "to install:${missing:- nothing}"
+          if [ -n "$missing" ]; then
+            sudo apt-get update -q
+            # shellcheck disable=SC2086
+            sudo apt-get install -y -q --no-install-recommends $missing
+          fi
+
+      - name: Versions and namespace settings
+        run: |
+          {
+            echo "runner label: ${{ matrix.os }}"
+            echo "image: ${ImageOS:-?} ${ImageVersion:-?}"
+            . /etc/os-release && echo "os: $PRETTY_NAME"
+            echo "kernel: $(uname -r) $(uname -m)"
+            echo "bwrap: $(bwrap --version)"
+            echo "python: $(python --version 2>&1)"
+            echo "systemd: $(systemctl --version | head -1)"
+            echo "shellcheck: $(shellcheck --version | sed -n 2p)"
+            echo "apparmor parser: $(apparmor_parser --version 2>/dev/null | head -1 || echo absent)"
+            for k in "$USERNS_SYSCTL" kernel.unprivileged_userns_clone user.max_user_namespaces; do
+              echo "sysctl $k = $(sysctl -n "$k" 2>/dev/null || echo absent)"
+            done
+            echo "AppArmor profiles naming bwrap: $(ls /etc/apparmor.d 2>/dev/null | grep -i bwrap | tr '\n' ' ' || true)"
+            echo "cgroup: $(stat -fc %T /sys/fs/cgroup)"
+          } | tee -a "$GITHUB_STEP_SUMMARY"
+
+      - name: Start a systemd user manager (for the LAB_LINUX_NET=systemd test)
+        run: |
+          uid="$(id -u)"
+          sudo loginctl enable-linger "$(id -un)" || true
+          for _ in $(seq 1 30); do [ -S "/run/user/$uid/bus" ] && break; sleep 0.5; done
+          if [ -S "/run/user/$uid/bus" ]; then
+            echo "XDG_RUNTIME_DIR=/run/user/$uid" >> "$GITHUB_ENV"
+            echo "DBUS_SESSION_BUS_ADDRESS=unix:path=/run/user/$uid/bus" >> "$GITHUB_ENV"
+            echo "user manager: running" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "user manager: no session bus socket appeared" | tee -a "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Restricted user namespaces - the wrapper must refuse
+        run: |
+          orig="$(sysctl -n "$USERNS_SYSCTL" 2>/dev/null || echo absent)"
+          echo "USERNS_ORIG=$orig" >> "$GITHUB_ENV"
+          [ "$orig" = absent ] || sudo sysctl -w "$USERNS_SYSCTL=1"
+          if bwrap --ro-bind / / true 2> /tmp/bwrap-restricted.err; then
+            echo "restricted state: could NOT be produced on this image (bwrap still works); test not run" | tee -a "$GITHUB_STEP_SUMMARY"
+          else
+            echo "restricted state (image default for $USERNS_SYSCTL: $orig): bwrap fails with: $(cat /tmp/bwrap-restricted.err)" | tee -a "$GITHUB_STEP_SUMMARY"
+            LAB_EXPECT_BWRAP_BROKEN=1 python -m unittest discover -s tests -p 'test_linux_sandbox.py' -k RestrictedUserns -v
+          fi
+
+      - name: Allow user namespaces for bwrap
+        run: |
+          works() { bwrap --ro-bind / / true 2>/dev/null; }
+          method="none needed"
+          if [ "$USERNS_ORIG" = 0 ]; then sudo sysctl -w "$USERNS_SYSCTL=0"; method="none needed (image default is 0; restored)"; fi
+          if ! works; then
+            # Least invasive first: allow user namespaces for the bwrap binary only.
+            printf '%s\n' 'abi <abi/4.0>,' 'include <tunables/global>' \
+              "profile lab-ci-bwrap $(command -v bwrap) flags=(unconfined) {" '  userns,' '}' | sudo tee /etc/apparmor.d/lab-ci-bwrap
+            sudo apparmor_parser -r /etc/apparmor.d/lab-ci-bwrap || true
+            method="AppArmor profile granting userns to the bwrap binary"
+          fi
+          if ! works; then
+            sudo rm -f /etc/apparmor.d/lab-ci-bwrap
+            sudo sysctl -w "$USERNS_SYSCTL=0"
+            method="sysctl $USERNS_SYSCTL=0"
+          fi
+          echo "user namespaces for bwrap: $method" | tee -a "$GITHUB_STEP_SUMMARY"
+          bwrap --ro-bind / / true
+
+      - name: All unit tests, with the sandbox required
+        env:
+          LAB_REQUIRE_LINUX_SANDBOX: "1"
+        run: |
+          python -m unittest discover -s tests -v 2>&1 | tee /tmp/unittest.log
+          {
+            echo '```'
+            tail -n 4 /tmp/unittest.log
+            grep -E '^NOTE: |\.\.\. skipped' /tmp/unittest.log || true
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"

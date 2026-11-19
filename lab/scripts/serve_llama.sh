@@ -18,7 +18,7 @@ nohup llama-server -m "$MODEL" --alias "qwen3.5-4b-$QUANT" \
   -c "$CTX" -np "${LAB_SLOTS:-1}" -ngl 99 --jinja --cache-prompt --metrics --no-webui "$@" \
   > "$LAB/logs/llama-server.log" 2>&1 &
 echo $! > "$LAB/run/llama.pid"
-for i in $(seq 1 120); do
+for _ in $(seq 1 120); do
   if curl -sf "http://127.0.0.1:$PORT/health" >/dev/null 2>&1; then echo "ready pid=$(cat "$LAB/run/llama.pid") port=$PORT model=$QUANT"; exit 0; fi
   kill -0 "$(cat "$LAB/run/llama.pid")" 2>/dev/null || { echo "server died" >&2; tail -20 "$LAB/logs/llama-server.log" >&2; exit 1; }
   sleep 1
