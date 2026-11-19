@@ -73,6 +73,8 @@ class Gate:
                                          "ask them to confirm, and stop. Call again only after the user says yes."),
             "declined": ("declined", "The user declined this. Nothing was done. Do not try again; tell the user it was cancelled."),
             "executed": ("already_used", "This confirmation id was already used once. Nothing more was done."),
+            "failed": ("already_failed", "This was attempted once and failed. It was not tried again. Tell the user it failed; "
+                                         "do not call again unless the user asks later."),
             "expired": ("expired", "This confirmation expired. Nothing was done. Prepare a new preview and ask the user again."),
         }[s]
         return self._refuse(cid, *msg)
@@ -86,6 +88,10 @@ class Gate:
 
     def executed(self, cid, detail=None):
         self.store.append(state.make_event("executed", cid, self.device_id, self.clock(), detail=detail or {}))
+
+    def failed(self, cid, detail=None):
+        """The approved action was attempted and did not happen. Closes the confirmation: no blind retry."""
+        self.store.append(state.make_event("failed", cid, self.device_id, self.clock(), detail=detail or {}))
 
 
 class Approver:

@@ -54,14 +54,17 @@ scripts/stop_servers.sh
 .venv/bin/python harness/regrade.py
 ```
 
-Suites: `v1` (55 tasks, `harness/tasks.py`, `fixtures/`) and `heldout` (63 tasks,
-`harness/tasks_heldout.py`, `fixtures_heldout/`).
+Suites: `v1` (55 tasks, `harness/tasks.py`, `fixtures/`), `heldout` (63 tasks,
+`harness/tasks_heldout.py`, `fixtures_heldout/`) and `third` (106 tasks, `harness/tasks_third.py`,
+`fixtures_third/`; tables with `harness/report_third.py`, written to `results/THIRD.md`).
 
 A configuration is a JSON overlay on the defaults at the top of `harness/runner.py`. The switches
 added in the second round: `"gate": true` (confirmation gate and ambiguity surfacing),
 `"nl_dates": true` (date/time-tolerant tools), `"system": ["base", "rules2", "fewshot2"]` (the
 compact prompt, read from `profiles/pocket-assistant/SOUL.md`), and for Hermes `"hermes_soul"`
-(install that persona as `SOUL.md`).
+(install that persona as `SOUL.md`). Added in the third round: `"v3": true` (anchored date and time
+offsets, ranges past midnight, no retry after a failed send or delete, thread lookup by number)
+and the prompt blocks `rules3` / `fewshot3` (read from `profiles/pocket-assistant/SOUL-v3.md`).
 
 ## Safety rules the harness keeps
 

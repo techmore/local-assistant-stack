@@ -10,7 +10,7 @@ confirmation is a pure function of its events (`reduce`). That choice is deliber
   * the log doubles as the audit trail.
 
 The tool layer and the approver are different principals. The tool layer may append
-`pending`, `executed` and `refused`; only an approver (the user's UI, here the test
+`pending`, `executed`, `failed` and `refused`; only an approver (the user's UI, here the test
 harness) may append `decision`. Stores:
 
   MemoryStore   in-process list (unit tests, the raw-endpoint harness)
@@ -24,7 +24,9 @@ Event schema, version 1 (every field JSON; no absolute local paths; times are UT
 
   v                1
   event_id         uuid4 hex, unique per event (idempotency key for a hub)
-  type             "pending" | "decision" | "executed" | "refused"
+  type             "pending" | "decision" | "executed" | "refused" | "failed"
+                   ("failed": the approved action was attempted and did not happen; terminal, so the
+                   same approval cannot be used for a blind retry. Readers that predate it ignore it.)
   confirmation_id  the id the events belong to ("cf-" + 12 hex)
   ts               "2026-11-18T19:04:11.123456Z"
   device_id        the device/client that wrote this event
@@ -120,7 +122,7 @@ def reduce(events, now=None):
 
     record: kind, preview, action, created_at, expires_at, created_by, status, decided_by,
             decided_at, executed_at, ignored (events that lost: late or duplicate decisions)
-    status: pending | approved | declined | executed | expired
+    status: pending | approved | declined | executed | failed | expired
     Rules: the FIRST decision written before expires_at wins; later or post-expiry decisions are
     kept in `ignored` and change nothing. `executed` is terminal. A pending or approved record
     whose expires_at has passed reads as expired.
@@ -153,6 +155,11 @@ def reduce(events, now=None):
                 r["status"], r["executed_at"] = "executed", ev["ts"]
             else:
                 r["ignored"].append({"event_id": ev["event_id"], "why": "executed_without_approval"})
+        elif typ == "failed":
+            if r["status"] == "approved":
+                r["status"], r["failed_at"] = "failed", ev["ts"]
+            else:
+                r["ignored"].append({"event_id": ev["event_id"], "why": "failed_without_approval"})
     for r in recs.values():
         if r["status"] in ("pending", "approved") and now > parse_ts(r["expires_at"]):
             r["status"] = "expired"

@@ -40,6 +40,19 @@ ranges
 offsets
   in two hours, in 90 minutes, in half an hour, an hour from now: exact elapsed time from now
   (computed in UTC, so correct across daylight-saving changes); result has date AND time
+
+Two later additions, off by default so that earlier measured configurations keep their behaviour
+(the tool layer turns both on together; tests/test_dates_v3.py):
+
+anchored=True   offsets from a date or time the caller already knows, so the model never subtracts:
+  the day before 2027-04-02, 2 days after friday, a week before march 20, the night before april 2
+  1 hour before 2:15pm (with the day in the same text or in the date field), 30 minutes after noon
+  The anchor must itself be a date or time this module understands ("the day before departure"
+  is rejected with a message that asks for the actual date).
+overnight=True  ranges may run past midnight; the result then carries end_date (the next day):
+  10pm to 2am, 9pm to 1, 11pm for 2 hours, 10pm to midnight, 10pm to 12am, 12am to 2am
+  Inside a range "12am" is midnight and "12pm" is noon. A bare "12am"/"12pm" start is still
+  rejected. A range longer than 16 hours is rejected as a probable am/pm slip.
 """
 import calendar
 import re
@@ -82,6 +95,7 @@ class When:
     date: str = None          # YYYY-MM-DD
     time: str = None          # HH:MM, 24-hour
     end_time: str = None      # HH:MM, 24-hour
+    end_date: str = None      # YYYY-MM-DD, set only when the range ends on a later day than `date`
     notes: list = field(default_factory=list)
 
     @property
@@ -128,8 +142,9 @@ _DUR_RE = re.compile(rf"(?<![\d:/-])({_T_STRICT})\s+for\s+((?:\d+|{_NUM_ALT})(?:
 _SINGLE_RE = re.compile(rf"(?:\bat\s+|@\s?)?(?<![\d:/-])({_T_STRICT})(?![\d:/-])")
 
 
-def _one_time(tok, meridiem_hint=None):
-    """-> (minutes since midnight, had_meridiem, was_24h). A bare number needs meridiem_hint."""
+def _one_time(tok, meridiem_hint=None, allow12=False):
+    """-> (minutes since midnight, had_meridiem, was_24h). A bare number needs meridiem_hint.
+    allow12: read "12am" as midnight and "12pm" as noon instead of rejecting them (range boundaries)."""
     tok = tok.strip()
     if tok in ("noon", "midday"):
         return 12 * 60, True, False
@@ -144,7 +159,7 @@ def _one_time(tok, meridiem_hint=None):
     if mer:
         if not 1 <= h <= 12:
             raise WhenError("bad_time", f"'{tok}' is not a valid time: with am/pm the hour must be 1 to 12.")
-        if h == 12 and mi == 0:
+        if h == 12 and mi == 0 and not allow12:
             raise WhenError("ambiguous_12", f"'{tok}' is ambiguous. Say 'noon' or 'midnight', or use 12:00 / 00:00.")
         return ((h % 12) + (12 if mer == "pm" else 0)) * 60 + mi, True, False
     if meridiem_hint and 1 <= h <= 12 and not m.group(1).startswith("0"):
@@ -173,8 +188,14 @@ def _is_open(tok):
     return bool(m) and 1 <= int(m.group(1)) <= 12 and not m.group(1).startswith("0")
 
 
-def _range(a, b):
-    """Two time tokens -> (start_minutes, end_minutes)."""
+MAX_OVERNIGHT_MIN = 16 * 60
+
+
+def _range(a, b, overnight=False):
+    """Two time tokens -> (start_minutes, end_minutes). With overnight=True the end may be past
+    24:00 (1440 or more): the range then finishes on the next day."""
+    if overnight:
+        return _range_overnight(a, b)
     ma, mb = _meridiem(a), _meridiem(b)
     oa, ob = _is_open(a), _is_open(b)
     if oa and ob and (_is_bare(a) or _is_bare(b)):
@@ -203,12 +224,46 @@ def _range(a, b):
     return start, end
 
 
+def _range_overnight(a, b):
+    def one(tok, hint=None):
+        return _one_time(tok, hint, allow12=True)[0]
+    ma, mb = _meridiem(a), _meridiem(b)
+    oa, ob = _is_open(a), _is_open(b)
+    if oa and ob and (_is_bare(a) or _is_bare(b)):
+        raise WhenError("ambiguous_ampm", f"'{a} to {b}' has no am/pm. Say e.g. '{a} to {b}pm' or use 24-hour times.")
+    if oa and mb is not None:
+        end = one(b)
+        start = one(a, mb)
+        if start >= end:  # "11 to 1pm" means 11am; "10 to 2am" means 10pm
+            other = one(a, "am" if mb == "pm" else "pm")
+            if other < end or mb == "am":
+                start = other
+    elif ob and ma is not None:
+        start = one(a)
+        end = one(b, ma)
+        if end <= start:  # "11am to 1" means 1pm; "9pm to 1" means 1am the next day
+            end = one(b, "pm" if ma == "am" else "am")
+    elif (_is_bare(a) and not ob) or (_is_bare(b) and not oa):
+        raise WhenError("ambiguous_ampm", f"'{a} to {b}' mixes a bare hour with 24-hour time. Add am/pm or use HH:MM for both.")
+    else:
+        start, end = one(a), one(b)
+    if end == start:
+        raise WhenError("empty_range", f"'{a} to {b}' starts and ends at the same time.")
+    if end < start:
+        end += 24 * 60
+    if end - start > MAX_OVERNIGHT_MIN:
+        raise WhenError("too_long", f"'{a} to {b}' would last {(end - start) // 60} hours and end on the next day. "
+                                    "Check am/pm with the user.")
+    return start, end
+
+
 def _fmt(minutes):
-    return f"{minutes // 60:02d}:{minutes % 60:02d}"
+    return f"{(minutes // 60) % 24:02d}:{minutes % 60:02d}"
 
 
-def _extract_time(t):
-    """Find a time or range inside cleaned text. -> (start, end, rest) with HH:MM strings or None."""
+def _extract_time(t, overnight=False):
+    """Find a time or range inside cleaned text. -> (start, end, rest, shift): HH:MM strings or None,
+    and the number of days after the start day on which the range ends (0, or 1 with overnight=True)."""
     m = _DUR_RE.search(t)
     if m:
         start = _one_time(m.group(1))[0]
@@ -223,9 +278,11 @@ def _extract_time(t):
         if mins <= 0:
             raise WhenError("empty_range", "the duration must be longer than zero.")
         end = start + mins
-        if end >= 24 * 60:
+        if end >= 24 * 60 and not overnight:
             raise WhenError("crosses_midnight", "that would end on the next day. Give an end time on the same day.")
-        return _fmt(start), _fmt(end), (t[:m.start()] + " " + t[m.end():]).strip()
+        if mins > MAX_OVERNIGHT_MIN and end > 24 * 60:
+            raise WhenError("too_long", "that would last more than 16 hours and end on a later day. Check the duration with the user.")
+        return _fmt(start), _fmt(end), (t[:m.start()] + " " + t[m.end():]).strip(), end // (24 * 60)
     m = _RANGE_RE.search(t)
     if m and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", t):
         a, b = m.group(1), m.group(2)
@@ -234,17 +291,19 @@ def _extract_time(t):
             if re.fullmatch(rf"(?:from\s+)?{_T}\s?(?:-|to|until|till|through)\s?{_T}", t):
                 _range(a, b)  # raises ambiguous_ampm
         else:
-            s, e = _range(a, b)
-            return _fmt(s), _fmt(e), (t[:m.start()] + " " + t[m.end():]).strip()
+            s, e = _range(a, b, overnight)
+            return _fmt(s), _fmt(e), (t[:m.start()] + " " + t[m.end():]).strip(), e // (24 * 60)
     m = _SINGLE_RE.search(t)
     if m:
         s = _one_time(m.group(1))[0]
-        return _fmt(s), None, (t[:m.start()] + " " + t[m.end():]).strip()
-    return None, None, t
+        return _fmt(s), None, (t[:m.start()] + " " + t[m.end():]).strip(), 0
+    return None, None, t, 0
 
 
-def parse_time(text):
-    """A clock time or a same-day range, nothing else. -> (start 'HH:MM', end 'HH:MM' or None)."""
+def parse_time(text, overnight=False, allow12=False, full=False):
+    """A clock time or a range, nothing else. -> (start 'HH:MM', end 'HH:MM' or None), or with
+    full=True (start, end, shift) where shift is how many days after the start day the range ends.
+    allow12: a lone "12am"/"12pm" is read as midnight/noon (used for an end-time field)."""
     t = _clean(text)
     if not t:
         raise WhenError("empty", "the time is empty.")
@@ -254,15 +313,19 @@ def parse_time(text):
             raise WhenError("vague_time", f"'{text}' is not a clock time. Ask the user for a time such as 9am.")
     if re.fullmatch(r"\d{1,2}", t):
         _one_time(t)  # raises ambiguous_ampm or returns for 13..23
-    start, end, rest = _extract_time(t)
+    if allow12 and re.fullmatch(r"12(:00)?\s?(am|pm)", t):
+        one = "00:00" if t.endswith("am") else "12:00"
+        return (one, None, 0) if full else (one, None)
+    start, end, rest, shift = _extract_time(t, overnight)
     rest = re.sub(r"\b(at|from)\b", "", rest).strip()
     if start is None:
         if re.fullmatch(r"\d{1,2}", t) and int(t) > 12:
-            return _fmt(_one_time(t)[0]), None
+            one = _fmt(_one_time(t)[0])
+            return (one, None, 0) if full else (one, None)
         raise WhenError("bad_time", f"'{text}' is not a time. Use 3pm, 3:30pm, 15:30, or a range like '3 to 4pm'.")
     if rest:
         raise WhenError("bad_time", f"could not read '{rest}' in the time '{text}'. Put the day in the date field.")
-    return start, end
+    return (start, end, shift) if full else (start, end)
 
 
 # ------------------------------------------------------------------ dates
@@ -439,7 +502,50 @@ _OFFSET_RE = re.compile(
     rf"(?:\s+and\s+(\d+|{_NUM_ALT})\s+(minute|min)s?)?)(?:\s+from\s+now)?")
 
 
-def parse_when(text, now, time_text=None, end_text=None, past=False):
+_BEFORE_AFTER = r"(before|after|prior to|ahead of|following)"
+_ANCHOR_DATE_RE = re.compile(
+    rf"(?:(the)|(\d+|{_NUM_ALT}))\s+(day|week|month|night|evening)s?\s+{_BEFORE_AFTER}\s+(?:on\s+)?(.+)")
+_ANCHOR_TIME_RE = re.compile(
+    rf"(?:(half\s+an?)\s+hour|(\d+|{_NUM_ALT})\s+(minute|min|hour|hr)s?(\s+and\s+a\s+half)?)\s+{_BEFORE_AFTER}\b(?:\s+(?:on|at)\b)?")
+
+
+def _anchor_minutes(m):
+    """Signed minutes for an _ANCHOR_TIME_RE match."""
+    if m.group(1):
+        mins = 30
+    else:
+        n, unit = _num(m.group(2)), m.group(3)
+        mins = n * 60 if unit.startswith("h") else n
+        if m.group(4):
+            mins += 30 if unit.startswith("h") else 0
+    return mins if m.group(5) in ("after", "following") else -mins
+
+
+def _anchored_date(rest, today, notes, past):
+    """'the day before 2027-04-02' / '2 days after friday' -> date, or None when `rest` is not such a phrase."""
+    m = _ANCHOR_DATE_RE.fullmatch(rest)
+    if not m:
+        return None
+    n = 1 if m.group(1) else _num(m.group(2))
+    unit, sign, anchor = m.group(3), (1 if m.group(4) in ("after", "following") else -1), m.group(5).strip()
+    try:
+        base = _parse_date(anchor, today, notes, past)
+    except WhenError as e:
+        if e.code == "unknown_date":
+            raise WhenError("unknown_anchor", f"'{anchor}' is not a date this tool knows. Find the actual date first and pass it, "
+                                              f"for example '{rest[:m.start(5)].strip()} 2027-04-02'.")
+        raise
+    if unit == "month":
+        y, mo = _add_months(base, sign * n)
+        d = _mk(y, mo, base.day, f"'{rest}'")
+    else:
+        d = base + timedelta(days=sign * n * (7 if unit == "week" else 1))
+    notes.append(f"{n} {unit if unit not in ('night', 'evening') else 'day'}{'s' if n != 1 else ''} "
+                 f"{'after' if sign > 0 else 'before'} {base.isoformat()} ({WEEKDAYS[base.weekday()]})")
+    return d
+
+
+def parse_when(text, now, time_text=None, end_text=None, past=False, anchored=False, overnight=False):
     """Resolve a natural or ISO date/time expression against `now` (timezone-aware).
 
     text       the date field as the model passed it; may also contain a time or range
@@ -448,7 +554,10 @@ def parse_when(text, now, time_text=None, end_text=None, past=False):
     end_text   optional separate end-time field
     past       the expression is a look-back filter ("since monday"): a bare weekday, month-day or
                day-of-month means the most recent one before today instead of the next one
-    Returns When(date, time, end_time, notes). Raises WhenError with a helpful message.
+    anchored   also accept offsets from a known date or time ("the day before 2027-04-02",
+               "1 hour before 2:15pm"); see the module docstring
+    overnight  also accept ranges that run past midnight; the result then has end_date
+    Returns When(date, time, end_time, end_date, notes). Raises WhenError with a helpful message.
     """
     _require_aware(now)
     tz = now.tzinfo
@@ -478,12 +587,23 @@ def parse_when(text, now, time_text=None, end_text=None, past=False):
         w.date, w.time = target.date().isoformat(), f"{target.hour:02d}:{target.minute:02d}"
         w.notes.append(f"{mins} minutes after now ({now.strftime('%Y-%m-%d %H:%M')} {tz.key})")
         return w
-    start, end, rest = _extract_time(t)
+    start, end, rest, shift = _extract_time(t, overnight)
     rest = re.sub(r"\b(at|from)\b\s*$", "", rest).strip()
     rest = re.sub(r"^(at|from)\b", "", rest).strip()
+    rest = re.sub(r"\s+", " ", rest)
+    delta = None  # minutes to add to the anchor time ("1 hour before 2:15pm")
+    if anchored:
+        m = _ANCHOR_TIME_RE.search(rest)
+        if m:
+            if start is None or end is not None:
+                raise WhenError("unknown_anchor", f"'{text}' needs one clock time to count from, for example '1 hour before 2:15pm'.")
+            delta = _anchor_minutes(m)
+            rest = re.sub(r"\s+", " ", (rest[:m.start()] + " " + rest[m.end():])).strip()
+            rest = re.sub(r"^(on|at)\s+", "", rest)
     vague = None
+    is_anchor = anchored and bool(_ANCHOR_DATE_RE.fullmatch(rest))  # "the night before april 2": keep the phrase whole
     for p in _PARTS_OF_DAY:
-        m2 = re.search(rf"\b(in the |this |at )?{p}\b", rest)
+        m2 = None if is_anchor else re.search(rf"\b(in the |this |at )?{p}\b", rest)
         if m2 and rest not in ("tonight", "this evening", "this afternoon", "this morning"):
             vague = p
             rest = (rest[:m2.start()] + rest[m2.end():]).strip()
@@ -493,33 +613,66 @@ def parse_when(text, now, time_text=None, end_text=None, past=False):
         if start is None:
             raise WhenError("unknown_date", f"could not understand the date '{text}'.")
         raise WhenError("missing_date", f"'{text}' has a time but no day. Ask the user which day.")
-    d = _parse_date(rest, today, w.notes, past)
+    d = (_anchored_date(rest, today, w.notes, past) if anchored else None) or _parse_date(rest, today, w.notes, past)
     if time_text is not None and str(time_text).strip():
-        s2, e2 = parse_time(time_text)
+        tt = _clean(str(time_text))
+        m = _ANCHOR_TIME_RE.search(tt) if anchored else None
+        if m:
+            if delta is not None:
+                raise WhenError("conflict", "two offsets were given. Send one of them.")
+            delta = _anchor_minutes(m)
+            tt = re.sub(r"\s+", " ", (tt[:m.start()] + " " + tt[m.end():])).strip()
+            if not tt:
+                raise WhenError("unknown_anchor", f"'{time_text}' needs a clock time to count from, for example '1 hour before 2:15pm'.")
+        s2, e2, sh2 = parse_time(tt, overnight, full=True)
+        if m and e2:
+            raise WhenError("unknown_anchor", f"'{time_text}' needs one clock time to count from, not a range.")
         if start is not None and start != s2:
             raise WhenError("conflict", f"the date field says {start} but the time field says {s2}. Send one of them.")
-        start, end = s2, (e2 or end)
+        start = s2
+        if e2:
+            end, shift = e2, sh2
     if end_text is not None and str(end_text).strip():
-        e3, extra = parse_time(end_text)
+        e3, extra = parse_time(end_text, allow12=overnight)
         if extra:
             raise WhenError("bad_time", f"the end time '{end_text}' must be a single time.")
         if end is not None and end != e3:
             raise WhenError("conflict", f"two different end times were given ({end} and {e3}).")
+        if end is None:
+            shift = 0
         end = e3
+    if delta is not None:
+        if start is None:
+            raise WhenError("unknown_anchor", f"'{text}' needs a clock time to count from, for example '1 hour before 2:15pm'.")
+        if end is not None:
+            raise WhenError("unknown_anchor", "an offset from a time cannot be combined with an end time.")
+        anchor = datetime(d.year, d.month, d.day, int(start[:2]), int(start[3:]))
+        target = anchor + timedelta(minutes=delta)
+        w.notes.append(f"{abs(delta)} minutes {'after' if delta > 0 else 'before'} {start} on {d.isoformat()}")
+        d, start = target.date(), f"{target.hour:02d}:{target.minute:02d}"
     if end is not None:
         if start is None:
             raise WhenError("missing_time", "an end time was given without a start time.")
-        if end == start:
+        if end == start and not shift:
             raise WhenError("empty_range", "the event starts and ends at the same time.")
-        if end < start:
-            raise WhenError("crosses_midnight", f"{start} to {end} would end on the next day. Give an end time on the same day.")
+        if end <= start and not shift:
+            if not overnight:
+                raise WhenError("crosses_midnight", f"{start} to {end} would end on the next day. Give an end time on the same day.")
+            shift = 1
+            mins = 24 * 60 - (int(start[:2]) * 60 + int(start[3:])) + int(end[:2]) * 60 + int(end[3:])
+            if mins > MAX_OVERNIGHT_MIN:
+                raise WhenError("too_long", f"{start} to {end} would last {mins // 60} hours and end on the next day. Check am/pm with the user.")
     if vague and start is None:
         w.notes.append(f"'{vague}' is not a clock time, so no time was set")
     w.date, w.time, w.end_time = d.isoformat(), start, end
     if start:
         _check_local(d, start, tz, "start time")
     if end:
-        _check_local(d, end, tz, "end time")
+        d_end = d + timedelta(days=shift)
+        if shift:
+            w.end_date = d_end.isoformat()
+            w.notes.append(f"ends the next day, {WEEKDAYS[d_end.weekday()]} {w.end_date}, at {end}")
+        _check_local(d_end, end, tz, "end time")
     return w
 
 
