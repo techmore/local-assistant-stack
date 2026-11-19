@@ -56,12 +56,14 @@ installs `bubblewrap` if the image lacks it, prints its versions, and runs all u
 128 tests are discovered; on these runners 126 run and 2 skip (both explained below). There is no
 model and no Hermes in these jobs.
 
-Runners used (GitHub-hosted, images of 2026-11-11; each with Python 3.11.18 and 3.14.10):
+Runners used (GitHub-hosted; values as printed by the jobs on 2026-11-19; each with Python 3.11.18
+and 3.14.10). A label resolves to whatever image GitHub currently serves, so later runs can differ;
+every job prints these values in its log and summary.
 
 | runner label | image | OS | kernel | bwrap | systemd | user namespaces for bwrap |
 |---|---|---|---|---|---|---|
 | `ubuntu-latest` | ubuntu26 20261111.196.1 | Ubuntu 26.04.1 LTS | 7.0.0-1019-azure x86_64 | 0.11.1 | 259 | work as shipped: `kernel.apparmor_restrict_unprivileged_userns=1`, and the image has an AppArmor profile `bwrap-userns-restrict` |
-| `ubuntu-24.04` | ubuntu24 20261111.370.1 | Ubuntu 24.04.5 LTS | 7.0.0-1017-azure x86_64 | 0.9.0 | 255 | **blocked as shipped** (sysctl is 1, no bwrap profile): `bwrap: setting up uid map: Permission denied`. The job loads an AppArmor profile that grants `userns` to the bwrap binary only |
+| `ubuntu-24.04` | ubuntu24 20261111.370.1 in one run, 20261111.127.1 in the next | Ubuntu 24.04.5 LTS | 7.0.0-1017-azure, then 7.0.0-1014-aws, x86_64 | 0.9.0 | 255 | **blocked as shipped** (sysctl is 1, no bwrap profile): `bwrap: setting up uid map: Permission denied`. The job loads an AppArmor profile that grants `userns` to the bwrap binary only |
 | `ubuntu-24.04-arm` | ubuntu24-arm64 20261111.182.1 | Ubuntu 24.04.5 LTS | 7.0.0-1017-azure aarch64 | 0.9.0 | 255 | as `ubuntu-24.04` |
 | `ubuntu-22.04` | ubuntu22 20261111.360.2 | Ubuntu 22.04.5 LTS | 6.8.0-1070-azure x86_64 | 0.6.1 | 249 | work as shipped (sysctl is 0) |
 
