@@ -1,0 +1,5 @@
+[
+  {"id": "r1", "text": "Renew library card", "due_date": "2027-03-18", "due_time": null},
+  {"id": "r2", "text": "Order printer ink", "due_date": "2027-03-13", "due_time": null},
+  {"id": "r3", "text": "Call Greta about the radiator", "due_date": "2027-03-15", "due_time": "09:00"}
+]

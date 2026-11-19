@@ -1,0 +1,12 @@
+{
+  "note": "raw_best + date/time-tolerant tools (natural expressions resolved in code). Prompt unchanged.",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "nl_dates": true
+}

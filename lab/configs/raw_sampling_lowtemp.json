@@ -1,0 +1,1 @@
+{"note": "Low temperature: 0.2, top_p 0.8, top_k 20, no presence penalty. (Not run in this pass.)", "thinking": false, "sampling": {"temperature": 0.2, "top_p": 0.8, "top_k": 20}}

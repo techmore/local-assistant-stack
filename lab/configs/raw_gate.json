@@ -1,0 +1,12 @@
+{
+  "note": "raw_best + confirmation gate in the tool layer (send_message/file_delete two-step, ambiguity surfaced). Prompt unchanged.",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "gate": true
+}

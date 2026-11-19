@@ -1,0 +1,9 @@
+[
+  {"id": "ev1", "title": "Standup", "date": "2027-03-11", "start_time": "09:30", "end_time": "10:00"},
+  {"id": "ev2", "title": "Physio - Dr. Amara", "date": "2027-03-12", "start_time": "13:00", "end_time": "14:00"},
+  {"id": "ev3", "title": "Dinner with Ines", "date": "2027-03-12", "start_time": "18:30", "end_time": "20:00"},
+  {"id": "ev4", "title": "Budget review", "date": "2027-03-15", "start_time": "10:00", "end_time": "11:00"},
+  {"id": "ev5", "title": "Parent-teacher conference", "date": "2027-03-16", "start_time": "15:30", "end_time": "16:15"},
+  {"id": "ev6", "title": "Oil change - Miller Auto", "date": "2027-03-19", "start_time": "08:00", "end_time": "09:00"},
+  {"id": "ev7", "title": "Lunch with Rahul", "date": "2027-03-24", "start_time": "12:00", "end_time": "13:00"}
+]

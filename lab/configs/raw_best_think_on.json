@@ -1,0 +1,12 @@
+{
+  "note": "raw_best with thinking on and one retry when the model returns an empty turn.",
+  "thinking": null,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "retry_empty": 1
+}

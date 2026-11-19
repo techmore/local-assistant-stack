@@ -1,0 +1,13 @@
+{
+  "note": "raw_best + confirmation gate + date/time-tolerant tools. Prompt unchanged.",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "gate": true,
+  "nl_dates": true
+}

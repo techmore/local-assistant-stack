@@ -1,0 +1,1 @@
+{"note": "Baseline + re-ask once when the model returns neither text nor a tool call.", "retry_empty": 1}

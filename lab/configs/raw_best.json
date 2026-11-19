@@ -1,0 +1,11 @@
+{
+  "note": "Combined: thinking off + rules + worked examples + explicit tool descriptions + constrained decoding, all 14 tools.",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules",
+    "fewshot"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true
+}

@@ -1,0 +1,15 @@
+models/
+.hf/
+.venv/
+.uv-cache/
+.uv-python/
+hermes-agent/
+hermes-home/
+run/
+logs/
+export/
+results/*.json
+results/heldout/
+__pycache__/
+*.pyc
+.DS_Store

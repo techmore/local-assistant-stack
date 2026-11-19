@@ -1,0 +1,6 @@
+RESIDENTIAL LEASE SUMMARY
+Unit: 14 Alder Court, Apt 3B
+Lease start: 2026-07-01
+Lease end: 2027-06-30
+Monthly rent: $2,150
+Security deposit: $2,150

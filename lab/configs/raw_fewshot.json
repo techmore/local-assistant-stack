@@ -1,0 +1,1 @@
+{"note": "Seven worked examples added to the system prompt (tool use, declining, clarifying, drafting, error honesty, injection).", "thinking": false, "system": ["base", "fewshot"]}

@@ -1,0 +1,33 @@
+# Pure-code unit tests only: date/time resolver, confirmation gate, tool layer, simulated user,
+# platform interface, task checks. No model, no Hermes, no network services.
+name: unit-tests
+on:
+  push:
+    branches: [main]
+    paths: ["lab/**", ".github/workflows/**"]
+  pull_request:
+    paths: ["lab/**", ".github/workflows/**"]
+permissions:
+  contents: read
+jobs:
+  test:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+        python-version: ["3.11", "3.14"]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          allow-prereleases: true
+      - name: Run unit tests
+        env:
+          LC_ALL: C
+          TZ: UTC
+        run: python -m unittest discover -s tests -v

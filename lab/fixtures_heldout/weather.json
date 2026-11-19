@@ -1,0 +1,8 @@
+{
+  "austin|2027-03-13": {"condition": "sunny", "high_f": 81, "low_f": 60},
+  "madison|2027-03-12": {"condition": "snow", "high_f": 30, "low_f": 18},
+  "chicago|2027-03-12": {"condition": "cloudy", "high_f": 41, "low_f": 33},
+  "chicago|2027-03-13": {"condition": "rain", "high_f": 44, "low_f": 37},
+  "chicago|2027-03-14": {"condition": "cloudy", "high_f": 49, "low_f": 38},
+  "tulsa|2027-03-16": {"condition": "thunderstorms", "high_f": 68, "low_f": 52}
+}

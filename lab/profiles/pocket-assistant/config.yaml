@@ -1,0 +1,19 @@
+# Settings this persona was measured with (Hermes Agent v0.23.2, Qwen3.5-4B Q4_K_M behind llama-server).
+# Hermes merges this into the profile's config; model endpoint and keys stay yours.
+model:
+  default: qwen3.5-4b
+  provider: custom
+  base_url: http://127.0.0.1:18432/v1     # the capping proxy, or llama-server started with a generation cap
+  context_length: 65536                   # Hermes refuses contexts below 64,000 tokens
+agent:
+  reasoning_effort: none                  # thinking off: no accuracy gain measured, 3.5x slower
+  tool_use_enforcement: false             # Hermes' extra tool-use prompt hurt this model
+tools:
+  tool_search:
+    enabled: "off"                        # 14 tools fit in the prompt; the search bridge cost accuracy
+auth:
+  adopt_external_logins: false
+mcp_servers:
+  lab:
+    command: ${ASSISTANT_PYTHON}
+    args: ["${ASSISTANT_TOOLS_DIR}/harness/mcp_server.py"]

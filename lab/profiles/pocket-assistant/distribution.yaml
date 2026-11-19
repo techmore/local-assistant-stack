@@ -1,0 +1,14 @@
+name: pocket-assistant
+version: 0.1.0
+description: "Compact personal-assistant persona for a small local model (Qwen3.5-4B class) with gated, date-tolerant tools"
+hermes_requires: ">=0.23.0"
+author: "local-assistant-stack contributors"
+license: "MIT"
+env_requires:
+  - name: ASSISTANT_TOOLS_DIR
+    description: "Directory that contains harness/mcp_server.py (the tool server this persona was written for)"
+    required: true
+  - name: ASSISTANT_PYTHON
+    description: "Python 3.11+ interpreter used to start the tool server"
+    required: false
+    default: "python3"
