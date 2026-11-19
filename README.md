@@ -43,7 +43,7 @@ lab/                  the evaluation lab (Python, standard library; see lab/docs
   docs/               usage, and design notes (gate contract, cross-platform status, an incident note)
   results/            summary tables (no raw transcripts)
   LICENSING.md        which licence covers what
-.github/workflows/    unit tests for lab/ on Linux and macOS
+.github/workflows/    unit tests for lab/ on Linux and macOS; the Linux sandbox wrapper on Ubuntu
 LICENSE               MIT, for code
 ```
 
@@ -101,11 +101,14 @@ The three changes:
   tokens for the raw endpoint (round 1: 505); a first Hermes turn is 4,796 tokens: 13.0 s to
   first token cold and 0.42 s warm on an Apple M1 Pro (raw: 3,217 tokens, 8.0 s cold, 0.28 s warm).
 
-Unit tests (84; resolver, gate, tool layer, simulated user, platform interface, task checks) need no
-model: `cd lab && python -m unittest discover -s tests`. Linux is unverified: see
-[`docs/design/cross-platform.md`](lab/docs/design/cross-platform.md).
+Unit tests (128; resolver, gate, tool layer, simulated user, platform interface, task checks, and the
+Linux sandbox wrapper, whose tests skip where bubblewrap is not usable) need no model:
+`cd lab && python -m unittest discover -s tests`. On Linux, CI runs the bubblewrap sandbox wrapper,
+the lab's tool server inside it and the shell helpers on hosted Ubuntu 22.04, 24.04 and 26.04 runners
+(x86_64, and aarch64 on 24.04); no model and no Hermes run there. What that covers, what it found
+and what is not enforced: [`docs/design/cross-platform.md`](lab/docs/design/cross-platform.md).
 
-What is not measured: Linux (the code was only run on macOS on Apple Silicon; the bubblewrap sandbox wrapper has never been executed), real apps or accounts (every tool is a stand-in over invented fixture data), any model other than Qwen3.5-4B, and Hermes configurations (2) and (3).
+What is not measured: Linux (every model and Hermes run was made on macOS on Apple Silicon; on Linux only the unit tests and the bubblewrap sandbox wrapper have been run, in CI on hosted Ubuntu runners, without a model or Hermes, and that wrapper does not filter outbound network traffic), real apps or accounts (every tool is a stand-in over invented fixture data), any model other than Qwen3.5-4B, and Hermes configurations (2) and (3).
 
 To reproduce: the unit tests need only Python 3.11+ (`cd lab && python -m unittest discover -s tests`). The model runs need `llama-server`, the Qwen3.5-4B Q4_K_M GGUF and, for the Hermes level, a sandboxed Hermes Agent v0.23.2 checkout; the steps are in [`lab/docs/USAGE.md`](lab/docs/USAGE.md). Raw transcripts are not published.
 
