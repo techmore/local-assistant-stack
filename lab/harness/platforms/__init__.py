@@ -6,7 +6,8 @@
     platforms.state_dir("local-assistant")     # XDG on Linux, ~/Library/Application Support on macOS
 
 Implementations: macos.py (sandbox-exec, used and tested in this lab) and linux.py
-(bubblewrap; written from documentation, UNTESTED). Nothing outside this package may call
+(bubblewrap; exercised by CI on hosted Ubuntu runners, never used to run Hermes; opt-in).
+Nothing outside this package may call
 sandbox-exec, bwrap, launchctl, systemctl, osascript or other OS-specific commands.
 """
 import os

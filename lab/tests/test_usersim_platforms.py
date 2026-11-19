@@ -75,7 +75,7 @@ class Platforms(unittest.TestCase):
         env = {k: v for k, v in os.environ.items() if k != "LAB_ALLOW_UNTESTED_SANDBOX"}
         with mock.patch.object(platforms, "system", return_value="linux"), mock.patch("shutil.which", return_value="/usr/bin/bwrap"), \
                 mock.patch.dict(os.environ, env, clear=True):
-            with self.assertRaises(platforms.SandboxUnavailable):       # present but untested: needs explicit opt-in
+            with self.assertRaises(platforms.SandboxUnavailable):       # present (or not runnable): never without the explicit opt-in
                 platforms.get_sandbox()
 
     def test_profiles_are_built_from_arguments_not_from_this_machine(self):

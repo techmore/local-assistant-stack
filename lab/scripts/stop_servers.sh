@@ -5,7 +5,7 @@ LAB="$(cd "$(dirname "$0")/.." && pwd)"
 for f in "$LAB"/run/*.pid; do
   [ -f "$f" ] || continue
   pid="$(cat "$f")"
-  if kill -0 "$pid" 2>/dev/null; then kill "$pid"; for i in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done; kill -9 "$pid" 2>/dev/null || true; fi
+  if kill -0 "$pid" 2>/dev/null; then kill "$pid"; for _ in 1 2 3 4 5 6 7 8 9 10; do kill -0 "$pid" 2>/dev/null || break; sleep 0.5; done; kill -9 "$pid" 2>/dev/null || true; fi
   rm -f "$f"
 done
 lsof -nP -iTCP:18431 -iTCP:18432 -sTCP:LISTEN 2>/dev/null || echo "no lab ports listening"

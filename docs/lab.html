@@ -79,7 +79,7 @@
 </ul>
 <h2 id="not-measured">What is not measured</h2>
 <ul>
-<li><strong>Linux.</strong> Everything was developed and run on macOS on Apple Silicon. The Linux sandbox wrapper (bubblewrap) has not been executed. See <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/docs/design/cross-platform.md"><code>docs/design/cross-platform.md</code></a>.</li>
+<li><strong>Linux.</strong> Every model and Hermes run was made on macOS on Apple Silicon. On Linux only the unit tests and the sandbox wrapper (bubblewrap) have been run, in CI on hosted Ubuntu runners, without a model or Hermes; that wrapper does not filter outbound network traffic. See <a href="https://github.com/techmore/local-assistant-stack/blob/main/lab/docs/design/cross-platform.md"><code>docs/design/cross-platform.md</code></a>.</li>
 <li><strong>Real apps and accounts.</strong> All tools are stand-ins. Nothing shows how the gate behaves in front of a real messaging or mail client.</li>
 <li><strong>Other models and sizes.</strong> One 4B model, one quantisation for the main tables.</li>
 <li><strong>Hermes configurations (2) and (3).</strong> The single-lever ablations were run at the bare endpoint only.</li>
