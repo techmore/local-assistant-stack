@@ -18,6 +18,15 @@ Two switchable behaviours, independent of each other and of the schema variant:
                  "in two hours"); dates.py resolves them against the fixture's fixed "now"
                  and the result carries the resolved absolute values.
 With both off the tools behave exactly as in the first benchmark.
+
+  v3=True        the third-round tool fixes (results/FAILURES.md, causes A, C, F and G), kept behind
+                 a switch so that earlier configurations still run exactly as they were measured:
+                 dates may be offsets from a known date or time ("the day before 2027-04-02",
+                 "1 hour before 2:15pm"); a range may run past midnight (the event gets an end_date)
+                 and "12am"/"midnight" is accepted as a range boundary; a send or delete whose
+                 execution failed is closed (status "failed"), is not retried on a second call and
+                 cannot be staged again unchanged for RETRY_COOLDOWN_S; messages_get_thread says it
+                 takes a phone number and contacts_lookup points there when a number is unknown.
 """
 import copy
 import json
@@ -31,11 +40,12 @@ import gate as gate_mod
 import state
 
 LAB = Path(__file__).resolve().parent.parent
-FIXTURE_DIRS = {"v1": "fixtures", "heldout": "fixtures_heldout"}
+FIXTURE_DIRS = {"v1": "fixtures", "heldout": "fixtures_heldout", "third": "fixtures_third"}
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 TIME_RE = re.compile(r"^([01]?\d|2[0-3]):[0-5]\d(:[0-5]\d)?$")
 GATED = ("send_message", "file_delete")
+RETRY_COOLDOWN_S = 120
 
 
 class Fixture:
@@ -81,7 +91,7 @@ class World:
     """Mutable fixture state plus a log of every tool call."""
 
     def __init__(self, overrides=None, fixture_name="v1", gate=False, nl_dates=False, store=None,
-                 device_id="tools-local", clock=None, id_factory=None):
+                 device_id="tools-local", clock=None, id_factory=None, v3=False):
         fx = fixture(fixture_name)
         self.fx = fx
         self.calendar = fx.load("calendar.json")
@@ -100,7 +110,8 @@ class World:
         # overrides: {tool_name: result_dict} forces that tool to return the given result
         # (tool-error tasks). "<tool>:execute" forces only the execution step of a gated tool.
         self.overrides = overrides or {}
-        self.gate_on, self.nl = bool(gate), bool(nl_dates)
+        self.gate_on, self.nl, self.v3 = bool(gate), bool(nl_dates), bool(v3)
+        self._failed = []  # v3: (kind, action, gate-clock time) of executions that failed
         kw = {"clock": clock} if clock else {}
         self.gate = gate_mod.Gate(store if store is not None else state.MemoryStore(), device_id,
                                   id_factory=id_factory, **kw) if self.gate_on else None
@@ -130,7 +141,7 @@ class World:
     def snapshot(self):
         """Plain-JSON end state, enough to grade a run without replaying it."""
         pend = list(self.gate._records().values()) if self.gate else []
-        return {"fixture": self.fx.name, "gate": self.gate_on, "nl_dates": self.nl, "base": self.base,
+        return {"fixture": self.fx.name, "gate": self.gate_on, "nl_dates": self.nl, "v3": self.v3, "base": self.base,
                 "reminders": self.reminders, "calendar": self.calendar, "sent": self.sent, "deleted": self.deleted,
                 "files": sorted(self.files), "executed": self.executed,
                 "confirmations": [{k: r[k] for k in ("confirmation_id", "kind", "status", "action", "decided_by")} for r in pend]}
@@ -140,7 +151,8 @@ class World:
         """-> (When, None) or (None, error_result)."""
         try:
             w = dates.parse_when(str(date) if date is not None else "", self.fx.now,
-                                 None if time is None else str(time), None if end is None else str(end))
+                                 None if time is None else str(time), None if end is None else str(end),
+                                 anchored=self.v3, overnight=self.v3)
         except dates.WhenError as e:
             return None, {"error": str(e), "code": e.code, "today": f"{self.fx.today} ({dates.WEEKDAYS[self.fx.now.weekday()]})"}
         if future:
@@ -156,6 +168,8 @@ class World:
             r["start_time" if "end_time" in given or w.end_time else "time"] = w.time
         if w.end_time:
             r["end_time"] = w.end_time
+        if w.end_date:
+            r["end_date"] = w.end_date
         if w.notes:
             r["notes"] = w.notes
         r["you_said"] = {k: v for k, v in given.items() if v is not None}
@@ -168,7 +182,8 @@ class World:
             if err:
                 return err
             self._norm = {"date": w.date}
-            return {"date": w.date, "weekday": w.weekday, "events": [e for e in self.calendar if e["date"] == w.date]}
+            return {"date": w.date, "weekday": w.weekday,
+                    "events": [e for e in self.calendar if e["date"] == w.date or (e.get("end_date") == w.date and e.get("end_time") != "00:00")]}
         if not DATE_RE.match(str(date)):
             return {"error": "invalid date, expected YYYY-MM-DD"}
         return {"date": date, "events": [e for e in self.calendar if e["date"] == date]}
@@ -182,6 +197,8 @@ class World:
                 return {"error": "the start time is missing. Ask the user what time.", "code": "missing_time"}
             self._norm = {"date": w.date, "start_time": w.time, "end_time": w.end_time}
             ev = {"id": f"ev{len(self.calendar) + 1}", "title": title, "date": w.date, "start_time": w.time, "end_time": w.end_time}
+            if w.end_date:
+                ev["end_date"] = w.end_date
             if "calendar_create_event:execute" in self.overrides:
                 return copy.deepcopy(self.overrides["calendar_create_event:execute"])
             self.calendar.append(ev)
@@ -205,6 +222,8 @@ class World:
                 return err
             if w.end_time:
                 return {"error": "a reminder has one time, not a range. Use calendar_create_event to block out time.", "code": "range_not_allowed"}
+            if "reminder_create:execute" in self.overrides:
+                return copy.deepcopy(self.overrides["reminder_create:execute"])
             self._norm = {"due_date": w.date, "due_time": w.time}
             r = {"id": f"r{len(self.reminders) + 1}", "text": text, "due_date": w.date, "due_time": w.time}
             self.reminders.append(r)
@@ -268,6 +287,8 @@ class World:
             if res.get("ok"):
                 self.gate.executed(rec["confirmation_id"], {"deleted": name})
                 res["status"] = "deleted"
+            elif self.v3:
+                res = self._exec_failed(rec, res, f"'{name}' was NOT deleted")
             return res
         if path is None:
             return {"error": "missing 'path' (the exact file name)."}
@@ -275,11 +296,33 @@ class World:
         if name not in self.files:
             return {"error": f"file not found: {path}"}
         self._norm = {"path": name}
+        if self.v3:
+            err = self._recently_failed("file_delete", {"path": name}, f"Deleting '{name}'")
+            if err:
+                return err
         text = self.files[name]
         preview = {"action": "file_delete", "files": [{"path": name, "bytes": len(text.encode("utf-8")),
                                                        "first_line": (text.strip().splitlines() or [""])[0][:80]}]}
         rec = self.gate.stage("file_delete", preview, {"path": name})
         return self._confirmation_required(rec, "deleted", "file_delete")
+
+    # ---- v3: a failed execution is final for that confirmation, and is not staged again unchanged
+    def _exec_failed(self, rec, res, what):
+        reason = res.get("error") or res.get("message") or "unknown error"
+        self.gate.failed(rec["confirmation_id"], {"error": reason})
+        self._failed.append((rec["kind"], rec["action"], self.gate.clock()))
+        return {"error": "failed", "reason": reason, "executed": False, "retry": False,
+                "message": f"{what}: {reason}. Do not prepare it or call this tool for it again now. "
+                           "Tell the user it failed and why, then stop. They can ask you to try again later."}
+
+    def _recently_failed(self, kind, action, what):
+        now = self.gate.clock()
+        for k, a, t in self._failed:
+            if k == kind and a == action and (now - t).total_seconds() < RETRY_COOLDOWN_S:
+                return {"error": "recently_failed", "executed": False, "retry": False,
+                        "message": f"{what} failed a moment ago, so no new preview was prepared. "
+                                   "Tell the user it failed and stop. They can ask you to try again later."}
+        return None
 
     def _confirmation_required(self, rec, verb, tool):
         return {"status": "confirmation_required", "executed": False, "confirmation_id": rec["confirmation_id"],
@@ -299,6 +342,9 @@ class World:
         if not self.gate_on:
             return {"query": name, "matches": hits}
         out = {"query": name, "count": len(hits), "ambiguous": len(hits) > 1, "matches": hits}
+        if self.v3 and not hits and re.search(r"\d{3}[-. ]?\d{4}", str(name)):
+            out["note"] = (f"'{name}' is a phone number that is not in the address book. That is fine: to read texts from it, "
+                           f"call messages_get_thread with the number as contact.")
         if len(hits) > 1:
             out["note"] = f"{len(hits)} contacts match '{name}'. Do not pick one: ask the user which they mean."
         return out
@@ -406,6 +452,8 @@ class World:
             if res.get("ok"):
                 self.gate.executed(rec["confirmation_id"], {"sent_to": act["to"]})
                 res = {"ok": True, "status": "sent", "sent_to": rec["preview"]["to"], "channel": act["channel"]}
+            elif self.v3:
+                res = self._exec_failed(rec, res, "The message was NOT sent")
             return res
         who, ch, err = self._resolve_recipient(to, channel)
         if err:
@@ -413,6 +461,10 @@ class World:
         if body is None or not str(body).strip():
             return {"error": "missing 'body' (the exact text to send)."}
         self._norm = {"to": who["address"], "channel": ch}
+        if self.v3:
+            err = self._recently_failed("send_message", {"to": who["address"], "body": str(body), "channel": ch}, "Sending this message")
+            if err:
+                return err
         preview = {"action": "send_message", "channel": ch, "to": who, "body": str(body)}
         rec = self.gate.stage("send_message", preview, {"to": who["address"], "body": str(body), "channel": ch})
         return self._confirmation_required(rec, "sent", "send_message")
@@ -620,7 +672,35 @@ GATE_SPECS = {
 }
 
 
-def schemas(variant="plain", names=None, gate=False, nl_dates=False):
+# ---- replacements for v3 (applied on top of the gate / nl_dates text)
+_NLD3 = ("The day in the user's exact words (\"friday\", \"tomorrow\", \"the day after tomorrow\", \"march 20\", \"in 3 days\") or YYYY-MM-DD. "
+         "For a day that depends on another date, pass the offset and that date: \"the day before 2027-04-02\", \"2 days after friday\". "
+         "Do not convert or subtract yourself: the tool works out the date and returns it.")
+V3_PARAMS = {
+    ("calendar_list_events", "date"): _NLD3,
+    ("calendar_create_event", "date"): _NLD3,
+    ("calendar_create_event", "start_time"): "Start time as the user said it: \"3pm\", \"15:00\", a range such as \"3 to 4pm\" or \"10pm to 2am\" "
+                                             "(a range may run past midnight), or an offset from a known time: \"1 hour before 2:15pm\".",
+    ("calendar_create_event", "end_time"): "Optional end time, e.g. \"4pm\" or \"midnight\". Leave out when start_time is a range.",
+    ("reminder_create", "due_date"): _NLD3 + " May include a time: \"tomorrow 9am\", \"in two hours\".",
+    ("reminder_create", "due_time"): "Optional time as the user said it (\"9am\", \"09:00\"), or an offset from a known time: \"1 hour before 2:15pm\".",
+    ("weather_get", "date"): _NLD3,
+    ("messages_get_thread", "contact"): "A contact name (\"Mom\") or a phone number exactly as given (\"555-0100\").",
+}
+V3_DESC_NL = {
+    "calendar_create_event": NL_DESC["calendar_create_event"].replace(
+        "If it returns an error", "An event may run past midnight (\"10pm to 2am\"): create ONE event. If it returns an error"),
+}
+V3_DESC = {
+    "messages_get_thread": 'Read the TEXT MESSAGE (SMS) thread with one person or one phone number. A number does not have to be in the '
+                           'address book: pass it as it is, without looking it up first. For email use email_search. '
+                           'Example: {"contact":"Mom"} or {"contact":"555-0100"}',
+}
+V3_GATE_SUFFIX = (" If step 2 returns an error, it did NOT happen: tell the user once that it failed and why, and stop. "
+                  "Do not prepare the same thing again unless the user asks later.")
+
+
+def schemas(variant="plain", names=None, gate=False, nl_dates=False, v3=False):
     """OpenAI-style tool list. variant: plain | explicit | strict | explicit_strict."""
     explicit_text = variant.startswith("explicit")
     strict = variant.endswith("strict")
@@ -628,11 +708,17 @@ def schemas(variant="plain", names=None, gate=False, nl_dates=False):
     for name in (names or TOOL_NAMES):
         params, required, plain, explicit = GATE_SPECS[name] if gate and name in GATE_SPECS else SPECS[name]
         if nl_dates and name in NL_DESC and explicit_text:
-            explicit = NL_DESC[name]
+            explicit = V3_DESC_NL.get(name, NL_DESC[name]) if v3 else NL_DESC[name]
+        if v3 and explicit_text:
+            explicit = V3_DESC.get(name, explicit)
+            if gate and name in GATED:
+                explicit += V3_GATE_SUFFIX
         props = {}
         for p, (typ, pd, ed, extra) in params.items():
             nl_p = nl_dates and (name, p) in NL_PARAMS
             props[p] = {"type": typ, "description": NL_PARAMS[(name, p)] if nl_p else (ed if explicit_text else pd)}
+            if v3 and explicit_text and (name, p) in V3_PARAMS and (nl_p or (name, p) not in NL_PARAMS):
+                props[p]["description"] = V3_PARAMS[(name, p)]
             if strict and not nl_p:
                 props[p].update(extra)
         if nl_dates:

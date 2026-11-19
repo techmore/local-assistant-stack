@@ -1,0 +1,3 @@
+Guest network
+Name: Juniper-Guest
+Password: copper-finch-58

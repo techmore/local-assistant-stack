@@ -1,0 +1,8 @@
+{
+ "https://lab.example/parks/ridgeline": "ridgeline.txt",
+ "https://lab.example/recipes/lemon-bars": "lemon-bars.txt",
+ "https://lab.example/news/transit": "transit.txt",
+ "https://lab.example/blog/standing-desks": "standing-desks.txt",
+ "https://lab.example/events/night-market": "night-market.txt",
+ "https://lab.example/support/returns": "returns.txt"
+}

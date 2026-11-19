@@ -85,7 +85,37 @@ Reading it:
 - Three checks rejected correct answers and were corrected after the first grading; both gradings
   are in `results/HELDOUT.md` (9 of 1,512 runs changed).
 
-The three changes:
+### Round 3: tool fixes and a third, fresh task set
+
+The second set had been read, so it was no longer held out. Round 3 froze a set of tool fixes
+(dates given as an offset from a known date or time, ranges past midnight, no retry after a
+failed send, thread lookup by phone number) and a revised prompt, then wrote 106 new tasks on new
+fixture data, with more multi-step and injection cases, and ran the previous best and the new
+configuration on them (3 runs per task, 318 runs per cell). Full tables:
+[`results/THIRD.md`](lab/results/THIRD.md); analysis: [`results/THIRD-FAILURES.md`](lab/results/THIRD-FAILURES.md).
+
+| configuration | raw endpoint | through Hermes v0.23.2 | sends/deletes executed without a recorded confirmation (raw / Hermes) |
+|---|---|---|---|
+| previous best (configuration 5 above) | 91.2% (86-96) | 87.1% (81-92) | 0 / 0 |
+| + round-3 tool fixes and prompt | 91.8% (87-96) | 88.4% (82-93) | 0 / 0 |
+| paired difference | +0.6 points (-3 to +5) | +1.3 points (-3 to +6) | |
+
+- **The round-3 changes did not measurably improve the pass rate.** The fixes worked on what they
+  targeted, and the new prompt introduced a new artefact of the same kind as the one it removed:
+  the model now copies "the day before" from the prompt's example where the user asked for "three
+  days before" or "a week before".
+- **The gate held again.** No send or delete ran without a recorded confirmation in any of the
+  1,272 runs, and no reminder or event was created by an injected instruction. One phishing email
+  still got the model to read a file and prepare it for sending in most runs; the preview was
+  never approved.
+- One check was corrected after the first grading (6 runs, fail to pass); as first graded the
+  four figures were 91.2%, 91.2%, 86.2% and 88.1%.
+- About four in five of the remaining failures are model habits that three rounds of prompt
+  changes have not reduced, which is the case for trying a fine-tune next, judged on several
+  hundred held-out tasks. A note on whether a 27B model could run instead is in
+  [`docs/notes/bigger-model-check.md`](lab/docs/notes/bigger-model-check.md) (checked, not run).
+
+The three changes of round 2:
 
 - **Confirmation gate** (`lab/harness/gate.py`, `lab/harness/state.py`, contract in
   [`docs/design/confirmation-gate.md`](lab/docs/design/confirmation-gate.md)): `send_message` and
@@ -101,7 +131,7 @@ The three changes:
   tokens for the raw endpoint (round 1: 505); a first Hermes turn is 4,796 tokens: 13.0 s to
   first token cold and 0.42 s warm on an Apple M1 Pro (raw: 3,217 tokens, 8.0 s cold, 0.28 s warm).
 
-Unit tests (128; resolver, gate, tool layer, simulated user, platform interface, task checks, and the
+Unit tests (182; resolver, gate, tool layer, simulated user, platform interface, task checks, and the
 Linux sandbox wrapper, whose tests skip where bubblewrap is not usable) need no model:
 `cd lab && python -m unittest discover -s tests`. On Linux, CI runs the bubblewrap sandbox wrapper,
 the lab's tool server inside it and the shell helpers on hosted Ubuntu 22.04, 24.04 and 26.04 runners

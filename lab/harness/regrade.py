@@ -17,7 +17,7 @@ import tools  # noqa: E402
 import runner  # noqa: E402
 
 RES = Path(__file__).resolve().parent.parent / "results"
-ap_dirs = [(RES, "v1"), (RES / "heldout", "heldout")]
+ap_dirs = [(RES, "v1"), (RES / "heldout", "heldout"), (RES / "third", "third")]
 
 for d_, suite in ap_dirs:
     if not d_.exists():

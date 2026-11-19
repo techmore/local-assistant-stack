@@ -53,8 +53,13 @@ transmits anything to another person or service.
    and the model never hold. In this lab the test harness is the approver (it stands in for a
    button in the user's client). No tool argument, no sentence in the conversation and no tool
    result can create an approval.
-6. **One use.** After execution the id is spent. A failed execution (carrier error) does not mark it
-   spent and is reported as an error.
+6. **One use.** After execution the id is spent. A failed execution (carrier error) is reported as
+   an error. In the first two rounds it did not mark the id spent, and a model was seen preparing
+   and re-sending the same message three times. With the third-round tools (`"v3": true`) a failed
+   execution writes a `failed` event, which is terminal: a second call with the same id returns
+   `already_failed`, the error carries `"retry": false` and a sentence telling the model to report
+   the failure once, and staging the identical action again is refused (`recently_failed`) for
+   two minutes. The user can ask again later; that is a new preview and a new approval.
 7. **Fail closed.** If the store cannot be read or written the tool returns `gate_unavailable` and
    does nothing.
 8. **Everything is logged.** Staging, decisions, executions and refused attempts are events in an
@@ -90,7 +95,9 @@ staged, who approved or declined, who executed), a version field, no absolute lo
 secrets, plain JSON. Rules of the reducer: the first decision written before `expires_at` wins;
 later, duplicate or post-expiry decisions are kept in the record's `ignored` list and change
 nothing; `executed` is terminal; an `executed` event without a prior approval is ignored and
-flagged.
+flagged. `failed` (added in the third round: the approved action was attempted and did not happen)
+is terminal in the same way and is likewise ignored without a prior approval; a reducer that
+predates it ignores the event, so the schema version is unchanged.
 
 Code never opens the log directly. It goes through a store with two methods (`append(event)`,
 `events()`); `MemoryStore` and `JsonlStore` exist, and a remote store is the seam for the hub.

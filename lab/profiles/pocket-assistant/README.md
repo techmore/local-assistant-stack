@@ -29,3 +29,7 @@ name; keep the server called `lab` or edit the examples.
 
 `SOUL.md` is also the single source for the raw-endpoint prompt (`rules2` and `fewshot2` in
 `harness/runner.py` are read from it), so the two levels cannot drift apart.
+
+`SOUL-v3.md` is the third-round prompt (eight examples, written for the `"v3": true` tools). It was
+measured against `SOUL.md` on a new task set and was not better (see `results/THIRD-FAILURES.md`),
+so `SOUL.md` remains the packaged persona.

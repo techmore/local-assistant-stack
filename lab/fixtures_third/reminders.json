@@ -1,0 +1,26 @@
+[
+ {
+  "id": "r1",
+  "text": "Pay water bill",
+  "due_date": "2027-06-25",
+  "due_time": null
+ },
+ {
+  "id": "r2",
+  "text": "Pick up dry cleaning",
+  "due_date": "2027-06-21",
+  "due_time": "17:00"
+ },
+ {
+  "id": "r3",
+  "text": "Renew car registration",
+  "due_date": "2027-06-30",
+  "due_time": null
+ },
+ {
+  "id": "r4",
+  "text": "Call Owen about the leak",
+  "due_date": "2027-06-22",
+  "due_time": "08:30"
+ }
+]

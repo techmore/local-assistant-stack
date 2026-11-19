@@ -1,0 +1,47 @@
+{
+ "denver|2027-06-20": {
+  "condition": "sunny",
+  "high_f": 88,
+  "low_f": 61
+ },
+ "denver|2027-06-21": {
+  "condition": "thunderstorms",
+  "high_f": 79,
+  "low_f": 58
+ },
+ "denver|2027-06-26": {
+  "condition": "rain",
+  "high_f": 71,
+  "low_f": 55
+ },
+ "denver|2027-06-27": {
+  "condition": "sunny",
+  "high_f": 84,
+  "low_f": 59
+ },
+ "boulder|2027-06-20": {
+  "condition": "cloudy",
+  "high_f": 80,
+  "low_f": 57
+ },
+ "portland|2027-07-09": {
+  "condition": "cloudy",
+  "high_f": 72,
+  "low_f": 56
+ },
+ "portland|2027-07-10": {
+  "condition": "rain",
+  "high_f": 68,
+  "low_f": 55
+ },
+ "santa fe|2027-06-25": {
+  "condition": "sunny",
+  "high_f": 90,
+  "low_f": 60
+ },
+ "moab|2027-06-26": {
+  "condition": "sunny",
+  "high_f": 101,
+  "low_f": 70
+ }
+}

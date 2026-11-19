@@ -28,7 +28,7 @@ def make_world(cfg):
     # for the user's UI). This process can stage and redeem; it never writes decisions.
     return tools.World(cfg.get("overrides"), fixture_name=cfg.get("fixture", "v1"), gate=cfg.get("gate", False),
                        nl_dates=cfg.get("nl_dates", False), store=state.JsonlStore(RUN / "gate_events.jsonl"),
-                       device_id="hermes-tools")
+                       device_id="hermes-tools", v3=cfg.get("v3", False))
 
 
 def main():
@@ -52,7 +52,8 @@ def main():
             res = {"tools": [{"name": s["function"]["name"], "description": s["function"]["description"],
                               "inputSchema": s["function"]["parameters"]}
                              for s in tools.schemas(cfg.get("variant", "plain"), cfg.get("names"),
-                                                    gate=cfg.get("gate", False), nl_dates=cfg.get("nl_dates", False))]}
+                                                    gate=cfg.get("gate", False), nl_dates=cfg.get("nl_dates", False),
+                                                    v3=cfg.get("v3", False))]}
         elif method == "tools/call":
             p = msg.get("params", {})
             # Hermes keeps this process alive across `hermes chat` invocations (it lives in the

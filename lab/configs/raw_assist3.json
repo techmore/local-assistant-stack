@@ -1,0 +1,14 @@
+{
+  "note": "Third round: gate + date-tolerant tools + the v3 tool fixes (anchored offsets, overnight ranges, no retry after a failed send, thread lookup by number) with the v3 prompt (profiles/pocket-assistant/SOUL-v3.md).",
+  "thinking": false,
+  "system": [
+    "base",
+    "rules3",
+    "fewshot3"
+  ],
+  "tools_variant": "explicit_strict",
+  "constrained": true,
+  "gate": true,
+  "nl_dates": true,
+  "v3": true
+}

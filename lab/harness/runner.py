@@ -36,7 +36,8 @@ import usersim  # noqa: E402
 
 # suite -> task module, fixture set, results sub-directory
 SUITES = {"v1": {"tasks": "tasks", "fixture": "v1", "results": ""},
-          "heldout": {"tasks": "tasks_heldout", "fixture": "heldout", "results": "heldout"}}
+          "heldout": {"tasks": "tasks_heldout", "fixture": "heldout", "results": "heldout"},
+          "third": {"tasks": "tasks_third", "fixture": "third", "results": "third"}}
 
 LAB = Path(__file__).resolve().parent.parent
 RUN = LAB / "run"
@@ -52,7 +53,8 @@ DEFAULTS = {
     "suite": "v1",             # v1 (first 55 tasks) | heldout (tasks_heldout.py, fixtures_heldout/)
     "gate": False,             # confirmation gate for send_message / file_delete + ambiguity surfacing
     "nl_dates": False,         # date/time arguments resolved in code from natural expressions
-    "system": ["base"],        # prompt blocks: base, rules, fewshot, rules2, fewshot2
+    "v3": False,               # third-round tool fixes: anchored offsets, overnight ranges, no retry after a failed send, thread lookup by number
+    "system": ["base"],        # prompt blocks: base, rules, fewshot, rules2, fewshot2, rules3, fewshot3
     "constrained": False,      # response_format json_schema on extraction tasks (sent without tools)
     "verify": False,           # second cheap pass checking the answer against the tool transcript
     "emulate_request": None,   # path to a captured Hermes request: reuse its system prompt + tool list, non-lab tools stubbed
@@ -107,22 +109,28 @@ def prompt_blocks(fx, p=""):
         # ---- second-generation prompt, written for the gated, date-tolerant tools (Part 1c)
         "rules2": RULES2,
         "fewshot2": FEWSHOT2.replace("{p}", p),
+        # ---- third-generation prompt (profiles/pocket-assistant/SOUL-v3.md), written for the v3 tools
+        "rules3": RULES3,
+        "fewshot3": FEWSHOT3.replace("{p}", p),
     }
 
 
 ASSIST2 = (Path(__file__).resolve().parent.parent / "profiles" / "pocket-assistant" / "SOUL.md")
+ASSIST3 = ASSIST2.with_name("SOUL-v3.md")
 
 
-def _soul_parts():
+def _soul_parts(path=ASSIST2):
     """The packaged persona (profiles/pocket-assistant/SOUL.md) is the single source of the v2 prompt:
-    identity line, rules, examples. Tool names in it carry the Hermes MCP prefix."""
-    text = ASSIST2.read_text(encoding="utf-8").strip()
+    identity line, rules, examples. Tool names in it carry the Hermes MCP prefix. SOUL-v3.md is the
+    same for the third-round prompt."""
+    text = path.read_text(encoding="utf-8").strip()
     head, rest = text.split("\n\nRules:\n", 1)
     rules, examples = rest.split("\n\nExamples:\n", 1)
     return head, "Rules:\n" + rules.strip(), "Examples:\n" + examples.strip().replace("mcp__lab__", "{p}")
 
 
 _, RULES2, FEWSHOT2 = _soul_parts()
+_, RULES3, FEWSHOT3 = _soul_parts(ASSIST3)
 
 VERIFY_SYS = (
     "You check an assistant's answer against the tool transcript. Rules: every factual claim must be supported by a tool result "
@@ -205,7 +213,7 @@ def system_prompt(cfg):
 
 def new_world(cfg, task, store=None, device_id="harness-tools"):
     return tools.World(task.get("overrides"), fixture_name=SUITES[cfg["suite"]]["fixture"], gate=cfg["gate"],
-                       nl_dates=cfg["nl_dates"], store=store, device_id=device_id)
+                       nl_dates=cfg["nl_dates"], store=store, device_id=device_id, v3=cfg.get("v3", False))
 
 
 class Snap:
@@ -226,7 +234,7 @@ def run_raw(cfg, task, seed):
     world = new_world(cfg, task)
     approver = gate_mod.Approver(world.gate.store, "harness-user") if cfg["gate"] else None
     names = tasks_mod.narrow_tools(task) if cfg["toolset"] == "narrow" else None
-    tool_list = tools.schemas(cfg["tools_variant"], names, gate=cfg["gate"], nl_dates=cfg["nl_dates"])
+    tool_list = tools.schemas(cfg["tools_variant"], names, gate=cfg["gate"], nl_dates=cfg["nl_dates"], v3=cfg.get("v3", False))
     extra = {"seed": seed}
     constrained_json = cfg["constrained"] and task.get("schema")
     if constrained_json:
@@ -278,6 +286,7 @@ def run_raw(cfg, task, seed):
                     world.calls.append({"name": tc["name"], "args": args, "norm": {}, "result": result})
                 else:
                     result = world.call(lab_name, args)
+                world.calls[-1]["turn"] = len(turns) - 1  # which user turn this call belongs to (0 = the first request)
                 if cfg["loop_guard"] and isinstance(result, dict) and result.get("error"):
                     key = tc["name"] + "|" + json.dumps(args, sort_keys=True)
                     failed[key] = failed.get(key, 0) + 1
@@ -388,7 +397,7 @@ def write_hermes_config(cfg):
 def mcp_settings(cfg, task=None, seed=0, names=None):
     return {"variant": cfg["tools_variant"], "names": names, "overrides": (task or {}).get("overrides"),
             "fixture": SUITES[cfg["suite"]]["fixture"], "gate": cfg["gate"], "nl_dates": cfg["nl_dates"],
-            "nonce": f"{task['id']}-{seed}-{time.time()}" if task else "init"}
+            "v3": cfg.get("v3", False), "nonce": f"{task['id']}-{seed}-{time.time()}" if task else "init"}
 
 
 def run_hermes(cfg, task, seed):
@@ -428,6 +437,7 @@ def run_hermes(cfg, task, seed):
     err, session, final, errtxt = None, None, "", ""
     sim, confirmed, turns = usersim.Sim(task), set(), [{"user": task["user"]}]
     user_msg = date_line + task["user"]
+    bounds = []  # number of tool calls logged by the end of each user turn
 
     def mcp_calls():
         return [json.loads(line) for line in (RUN / "mcp_calls.jsonl").read_text().splitlines() if line.strip()]
@@ -450,6 +460,7 @@ def run_hermes(cfg, task, seed):
             hermes_reset()  # the gateway would otherwise keep running the abandoned turn into the next task
         final = clean_hermes_output(out)
         turns[-1]["final"] = final
+        bounds.append(len(mcp_calls()))
         m = re.search(r"session[_ ]id:?\s*(\S+)", re.sub(r"\x1b\[[0-9;?]*[A-Za-z]", "", (out or "") + "\n" + errtxt), re.I)
         session = session or (m.group(1) if m else None)
         if err or not session or task.get("schema"):
@@ -466,6 +477,8 @@ def run_hermes(cfg, task, seed):
         turns.append({"user": msg})
     wall = time.time() - t0
     calls = mcp_calls()
+    for i, c in enumerate(calls):
+        c["turn"] = next((t for t, b in enumerate(bounds) if i < b), max(len(bounds) - 1, 0))
     snap = snapshot()
     recs = [json.loads(line) for line in proxy_lines()[before:]]
     recs = [r for r in recs if "n_messages" in r]
@@ -532,7 +545,7 @@ def main():
     ap.add_argument("--runs", type=int, default=3)
     ap.add_argument("--only", default="")
     ap.add_argument("--out", default="")
-    ap.add_argument("--suite", default="", help="v1 (the first 55 tasks) or heldout; default: the config's, else v1")
+    ap.add_argument("--suite", default="", help="v1 (the first 55 tasks), heldout or third; default: the config's, else v1")
     ap.add_argument("--jobs", type=int, default=1, help="concurrent task runs (raw level only); timings are then not comparable")
     a = ap.parse_args()
     cfg = load_config(a.config, a.suite or None)
@@ -565,7 +578,7 @@ def main():
         return {
             "pass": ok, "fail_cat": fail_cat, "detail": detail, "wall_s": round(time.time() - t0, 2),
             "final": (run["final"] or "")[:1500], "turns": run.get("turns", []),
-            "calls": [{"name": c["name"], "args": c["args"], "norm": c.get("norm"), "result": c["result"],
+            "calls": [{"name": c["name"], "args": c["args"], "norm": c.get("norm"), "result": c["result"], "turn": c.get("turn", 0),
                        "error": c["result"].get("error") if isinstance(c["result"], dict) else None} for c in run["calls"]],
             "other_tool_calls": [n for n in run.get("tool_names", []) if not any(n.endswith(c["name"]) for c in run["calls"])],
             "snapshot": run["snapshot"], "unsafe": run.get("unsafe", []), "confirmed_ids": run.get("confirmed_ids", []),
